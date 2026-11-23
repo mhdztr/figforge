@@ -1,0 +1,320 @@
+# fig-forge — Continuous Development Roadmap
+
+| Field | Value |
+| --- | --- |
+| **Status** | Active — Phase 0 complete, Phase 1 ready to begin |
+| **Owner** | `mhdztr` |
+| **Created** | 2026-11-23 |
+| **Last updated** | 2026-11-23 |
+| **Source of truth** | This file for strategy; [`MAINTENANCE.md`](MAINTENANCE.md) for the per-version runbook |
+| **Target client (current)** | Figma Desktop **126.12.7** (Electron **44.11.3**, Chromium **152.0.7977.169**) |
+| **Hard deadline** | Before Figma's **15 December** support cutoff for the version in the wild |
+
+---
+
+## 1. Why this project exists
+
+### 1.1 Upstream is archived
+
+`IliyaBrook/figma-linux` was archived on **2026-11-07** with an explicit notice: no further releases, no bug fixes, no security updates, no support. Its last release was **126.10.10** (2026-10-16), built against Electron **43.7.11**. Users were invited to fork and self-maintain. `mhdztr/figma-linux` was that fork; it is now **fig-forge** (`mhdztr/fig-forge`), with `upstream` retained as a remote for provenance.
+
+### 1.2 The "will no longer work on 15 Dec" banner — evidence-based diagnosis
+
+This is the most important finding and it determines the entire strategy.
+
+**Evidence gathered 2026-11-23:**
+
+1. The full current Figma Windows package (`Figma-126.12.7-full.nupkg`) was downloaded, its `app.asar` unpacked (99/105 files; 6 unpacked/special), and every shipped text source was searched: `main.js`, `desktop_shell.js`, all `i18n/*.json`, `shell.html`, `build.json`, `package.json`. **The banner string is not present in the client binary.**
+2. Figma's own Help Center — *Guide to the Figma desktop app* (article `5601429983767`, updated **2026-11-22**) states:
+   > "We recommend keeping the desktop app updated to the latest available version. If you are not on the latest version, a message will display in the app prompting you to update… **Support for previous versions is removed six months after release.**"
+
+**Conclusion:** the banner is a **server-side, client-version-gated notice**. Figma reads the version the app reports at handshake; once that version is ~6 months old, it warns and then refuses service. Therefore:
+
+- ❌ **Wrong fix:** string-patching or hiding the banner in the Linux client. The server will still cut the connection off.
+- ✅ **Right fix:** ship a client whose reported version is inside Figma's support window, and **keep doing so on every Figma release** (at minimum before each 6-month cutoff).
+
+Maintenance is therefore a **continuous release train**, not a one-time port. That is what this roadmap formalizes.
+
+### 1.3 Version authority — a real edge case already observed
+
+On 2026-11-23 the two upstream version sources disagreed:
+
+| Source | Version | Last-modified | Detail |
+| --- | --- | --- | --- |
+| `https://desktop.figma.com/win/RELEASES` | 126.11.11 | 2026-11-17T00:40:54Z | CloudFront-served, cached (`age ~29365s`, `max-age=86400`) |
+| `https://desktop.figma.com/win/FigmaSetup.exe` | **126.12.7** | 2026-11-18T21:36:09Z | Embedded nupkg `Figma-126.12.7-full.nupkg`, 161,210,936 bytes |
+
+The installer is newer and authoritative. `scripts/figma-version-common.sh` + `build.sh` already implement exactly the right policy: parse both, warn on mismatch, **select the installer version**. This behaviour must be preserved and covered by a regression test (Phase 3).
+
+---
+
+## 2. Product definition
+
+### 2.1 What fig-forge is
+
+A maintained fork of the archived figma-linux project. It downloads the official Figma Desktop Windows installer, extracts the real Electron application, patches Linux compatibility seams, bundles a version-matched Electron runtime, and produces **AppImage / .deb / .rpm** packages. It is not a browser wrapper and not a web app.
+
+### 2.2 Goals
+
+- **G1 — Currency.** Every released fig-forge build tracks the newest full Figma desktop version, with a maximum lag of one Figma release cycle.
+- **G2 — Continuity.** No user is left stranded by a server-side support cutoff; a supported build exists before every 6-month boundary.
+- **G3 — Fidelity.** The patched app behaves like the official desktop client: auth, preload/native bindings, tray, `figma://` protocol, MCP, local fonts, offline files.
+- **G4 — Verifiability.** Every release is gated by automated tests plus a documented manual smoke matrix.
+- **G5 — Provenance.** Upstream authorship and the original license terms are preserved; `mhdztr` is clearly credited as maintainer.
+
+### 2.3 Non-goals
+
+- Faking or spoofing version strings to defeat the server gate (would break preload/native compatibility and violate trust).
+- Reimplementing Figma's renderer or editor.
+- Official Figma support — Figma Desktop remains proprietary and governed by Figma's ToS.
+- x86_64-only scope is unchanged; ARM64 is out of scope until upstream provides an ARM64 Windows package.
+
+### 2.4 Operating principles
+
+1. **Match Electron exactly.** Figma's preload and native bindings are compiled against its Electron major; a mismatch breaks auth. Detect from `Figma.exe`, never hard-code except as a last-resort fallback.
+2. **Installer wins on version conflict** (see §1.3).
+3. **No silent patch drift.** Every `sed`/wrapper patch must have a "sentinel" assertion that fails loudly when its target disappears in a new Figma build.
+4. **Conventional commits everywhere** (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`, `ci:`, `build:`).
+5. **License is inherited, not replaced.**
+
+---
+
+## 3. Operating model — the continuous release train
+
+### 3.1 Triggers
+
+| Trigger | Detection | Action |
+| --- | --- | --- |
+| New full Figma version | `RELEASES` manifest or installer nupkg name changes (poll daily via CI cron) | Open a `release/x.y.z` branch, run the runbook |
+| Support cutoff approaching | Version age ≥ 5 months | Emergency release even if no new Figma version |
+| Upstream/ distro breakage | Issue report (Wayland, Mesa, packaging) | `fix/*` branch, patch, backport to latest release |
+| Security-relevant Electron update | Electron advisory affecting bundled runtime | Rebuild against patched Electron **only if it still matches Figma's major**; otherwise wait for Figma |
+
+### 3.2 Cadence
+
+- **Daily (automated, Phase 3):** version watch; open/refresh a tracking issue when the version moves.
+- **On every new full version:** build → test → release. Target ≤ 72 hours from Figma publication.
+- **Monthly:** known-issue triage and dependency/toolchain refresh.
+- **Quarterly:** review this roadmap, risk register, and success metrics.
+
+### 3.3 Branch and tag model
+
+```
+master                     # stable, always equals the latest released build
+release/126.12.7           # cut from master; only release-prep commits
+fix/<short-topic>          # bugfixes, merged to master, cherry-picked to release
+ci/<short-topic>           # automation work
+docs/<short-topic>         # documentation
+```
+
+Tags: `v<figma-version>` (e.g. `v126.12.7`), optionally `v126.12.7-r1` for a rebuild. GitHub Releases carry generated notes + the test matrix summary.
+
+### 3.4 Commit convention
+
+| Type | Use |
+| --- | --- |
+| `feat:` | new user-visible capability or new automation |
+| `fix:` | bug fix, including patch-sentinel repairs |
+| `chore:` | maintenance, renames, dependency bumps, CI plumbing |
+| `docs:` | documentation only |
+| `test:` | tests only |
+| `ci:` | workflow changes |
+| `build:` | build script / packaging changes |
+| `refactor:` | behaviour-preserving code change |
+
+Breaking changes use `!` (e.g. `feat!: drop Electron 43 fallback`).
+
+---
+
+## 4. Phase 0 — Foundation and rebrand
+
+**Status: COMPLETE (2026-11-23)**
+
+| ID | Task | Verification | Status |
+| --- | --- | --- | --- |
+| 0.1 | Rename GitHub repo `mhdztr/figma-linux` → `mhdztr/fig-forge` | `gh repo view mhdztr/fig-forge` resolves | ✅ |
+| 0.2 | Move working copy to `~/Projects/fig-forge`, repoint `origin`, add `upstream` remote | `git remote -v` | ✅ |
+| 0.3 | Preserve original license notice and add explicit `mhdztr` maintainer credit | README §License + `ATTRIBUTION.md` | ✅ |
+| 0.4 | Diagnose Dec 15 banner from primary sources | §1.2 above | ✅ |
+| 0.5 | Identify newest client and verify Electron/patch targets against it | §1.3 + §5.2 below | ✅ |
+| 0.6 | Write this roadmap + maintenance runbook into the repo | These files | ✅ |
+
+---
+
+## 5. Phase 1 — Prove the build against Figma 126.12.7
+
+**Status: READY TO BEGIN.** This is the critical path: everything else depends on a verified build.
+
+### 5.1 Objectives
+
+- Produce a working AppImage/.deb/.rpm from the newest Figma client.
+- Confirm Electron 44.11.3 compatibility (the first major bump since the fork's last known-good build on 43.7.11).
+- Turn every implicit assumption in `build.sh` into an explicit, failing-loud assertion.
+
+### 5.2 Pre-flight facts already established
+
+| Check | Result |
+| --- | --- |
+| Newest client | 126.12.7 (installer authoritative; manifest stale at 126.11.11) |
+| Embedded Electron | `Electron/44.11.3` |
+| Embedded Chromium | `Chrome/152.0.7977.169` |
+| `app.asar` extraction with pinned `@electron/asar@4.2.0` | 99 extracted / 6 skipped — works |
+| `package.json` version in asar | 126.12.7 |
+| `frame:!1` in `main.js` | 6 occurrences |
+| `titleBarStyle:"hidden"` in `main.js` | 1 |
+| `process.platform==="win32"&&(this.windowsAppMenu=` in `main.js` | 1 |
+| Electron auto-detect regex | Generic `Electron/[0-9]+\.[0-9]+\.[0-9]+` — picks up 44.11.3 |
+
+### 5.3 Toolchain preconditions
+
+- Node **≥ 22.12** (`build.sh` installs 22.23.1 locally if system Node is older).
+- `@electron/asar` pinned to **4.2.0** — 4.2.1+ rejects Figma's header (`/.codesign` has size `-1000`).
+- `7z` (p7zip-full), `shellcheck`, `rpm`, `imagemagick`, `appimagetool` 1.9.1 + Type-2 runtime `20251108` (fetched by `scripts/appimage-toolchain.sh`).
+- Disk: budget ~4 GB for installer, nupkg, Electron dist, staging, and outputs.
+
+### 5.4 Task breakdown
+
+| ID | Task | Command / action | Expected result | Failure signal |
+| --- | --- | --- | --- | --- |
+| 1.1 | Clean scratch build | `./build.sh --build appimage --clean yes` from a scratch copy (never the working tree) | AppImage produced at `figma-desktop-126.12.7-x86_64.AppImage` | Any non-zero exit; capture full log |
+| 1.2 | Verify version resolution | `./figma-version-tool.sh --json` | `selected_version: 126.12.7`, warning about manifest mismatch | Different version → investigate CDN/installer drift |
+| 1.3 | Verify Electron selection | grep build log for `Detected Electron version from Figma.exe: 44.11.3` | Exactly 44.11.3 | Fallback `39.8.6` used → regex/format change |
+| 1.4 | Asar extraction integrity | Build log line `Extracted: 99 files, Skipped: 6` | Matches pre-flight | Count drift → header format change |
+| 1.5 | Patch sentinels | Add assertions for the three patterns in §5.2 before each `sed` | Build aborts if any count is 0 | Count 0 → patch engine must be updated |
+| 1.6 | Run unit tests | `node --test scripts/tests/*.test.js scripts/font-enum/tests/*.test.js` | All pass (baseline 62) | Any failure |
+| 1.7 | Lint | `shellcheck -x figma-version-tool.sh scripts/figma-version-common.sh scripts/launcher-common.sh` + `bash -n` on all shell scripts | Clean | Any warning |
+| 1.8 | AppImage smoke | `bash scripts/tests/appimage-smoke.sh` | Mounts/runs without FUSE | Failure |
+| 1.9 | Manual smoke (X11) | Launch AppImage, sign in, open a file, check tray, protocol handler, fonts, devtools | All features work | Blank view / auth failure / missing tray |
+| 1.10 | Manual smoke (Wayland) | Repeat with native Wayland + XWayland; check tab bar and canvas | No blanking/transparency | Known issues #29/#34 reproduce |
+| 1.11 | Packaging | `make build-deb`, `make build-rpm`; clean install + upgrade on Debian/Ubuntu and Fedora | Install, launch, uninstall clean | See backlog §8 |
+| 1.12 | Document results | Append a `Phase 1 results` section to this file with pass/fail per task | Reproducible record | — |
+
+### 5.5 Acceptance criteria (definition of done)
+
+- [ ] A build from 126.12.7 produces all three package formats.
+- [ ] Version resolution selects 126.12.7 despite the stale manifest.
+- [ ] Electron 44.11.3 is auto-detected and used.
+- [ ] All patch sentinels pass; no silent no-op patches.
+- [ ] Automated suite: 0 failures.
+- [ ] Manual smoke: auth, canvas, tray, fonts, protocol, MCP all functional on X11.
+- [ ] Wayland status documented (known issues may remain, but must be recorded, not guessed).
+- [ ] Results appended to this roadmap and a `Release v126.12.7` issue opened.
+
+### 5.6 Risks / mitigations
+
+| Risk | Likelihood | Impact | Mitigation |
+| --- | --- | --- | --- |
+| Electron 44 native ABI breaks font stub | Medium | High | Run font-enum integration tests; inspect `bindings.node` load path |
+| Frame wrapper internal patches break on new Chromium | Medium | Medium | Verify native frames + tab drag manually; revert per-patch if needed |
+| Wayland app-view blanking (#34) persists | High | Medium | Document; fall back to XWayland in launcher; track upstream |
+| Mesa 26 canvas corruption (#23) | Low on Chromium 152 | High | Verify on Fedora 44; issue reported fixed by newer Chromium |
+| Manifest/installer mismatch flips mid-release | Low | Medium | Installer-authoritative logic already handles it; assert in tests |
+| 7z/asar header change | Low | High | Pinned asar 4.2.0; custom extractor with explicit skip counting |
+
+---
+
+## 6. Phase 2 — Ship before the December cutoff
+
+1. Freeze `release/126.12.7` from a Phase-1-passing commit.
+2. Generate `CHANGELOG.md` entry with: Figma version, Electron version, test matrix, known issues.
+3. Build all three artifacts from a clean checkout; verify SHA256SUMS.
+4. Tag `v126.12.7`; publish GitHub Release with notes and checksums.
+5. Update README "Download an Existing AppImage" links and the "current version" badge.
+6. Announce in the repo Discussions/README banner: users on pre-June builds must upgrade before **15 Dec**.
+7. Monitor issue tracker for 72 hours; be ready with `fix/*` + `v126.12.7-r1`.
+
+**Rollback:** keep the previous release assets published; if a regression is confirmed, mark the new release as having known issues rather than deleting it, and publish `v<previous>-r1` with the fix.
+
+---
+
+## 7. Phase 3 — Automation and guardrails
+
+| ID | Work | Outcome |
+| --- | --- | --- |
+| 3.1 | Daily cron workflow polling `RELEASES` + installer nupkg; open/refresh a tracking issue on change | No version drift goes unnoticed |
+| 3.2 | Patch-sentinel test file (`scripts/tests/patch-targets.test.js`) fed by a captured asar fixture | Pattern loss fails CI immediately |
+| 3.3 | Manifest-vs-installer mismatch regression test using recorded fixtures | §1.3 behaviour is locked in |
+| 3.4 | Matrix build job (AppImage + deb + rpm) on release tags | Reproducible artifacts |
+| 3.5 | Test gate: unit + shellcheck + smoke must pass before Release publish | G4 enforced mechanically |
+| 3.6 | Dependabot/toolchain tracking for Node, asar pin, appimagetool runtime | Toolchain drift visible |
+| 3.7 | Issue templates for "new Figma version" and "regression on version X" | Faster triage |
+
+---
+
+## 8. Phase 4 — Known-issue backlog
+
+Priority: P0 blocks release, P1 blocks Wayland parity, P2 quality, P3 polish.
+
+| ID | Issue | Source | Priority | Notes |
+| --- | --- | --- | --- | --- |
+| B1 | App view blanking on Electron 43 X11/XWayland/Wayland | #34 | P1 | Retest on Electron 44 before assuming fixed |
+| B2 | Wayland tab bar black/transparent | #29 | P1 | Retest on 44.11.3 |
+| B3 | Canvas corruption on Fedora 44 / Mesa 26 | #23 | P1 | Chromium 152 expected to fix; verify |
+| B4 | Tray context menu broken on Figma 126.10+ | #35 | P1 | Patch target may have moved in main.js |
+| B5 | Tray icon dark mode | #36 | P3 | Cosmetic |
+| B6 | Installed fonts supersede other fonts | #15 | P2 | Font-agent interaction |
+| B7 | Drag-and-drop unsupported | #12 | P2 | Native binding gap |
+| B8 | Pinch zoom unsupported | #11 | P2 | Native binding gap |
+| B9 | `.desktop` overwritten every launch | #32 | P2 | Launcher/packaging fix |
+| B10 | Eyedropper / font-preview endpoint 404 | README | P2 | Documented limitation |
+| B11 | Direct NVIDIA hardware rendering unverified | release notes | P2 | Test matrix gap |
+| B12 | Fresh browser sign-in / logout unverified | release notes | P1 | Auth is load-bearing |
+
+---
+
+## 9. The evergreen loop
+
+Phase 1 is a procedure, not a one-off. For every new Figma version, execute [`MAINTENANCE.md`](MAINTENANCE.md) end-to-end. The loop is:
+
+```
+watch → detect → branch → build → assert sentinels → test → smoke → release → monitor → repeat
+```
+
+The only thing that changes between versions is the version number and whatever the sentinel checks reveal.
+
+---
+
+## 10. Risk register
+
+| ID | Risk | Severity | Owner action |
+| --- | --- | --- | --- |
+| R1 | Figma tightens server-side checks beyond version string | High | Monitor auth behaviour each release; never spoof version |
+| R2 | Figma ships MAC-randomized/entitled binary that won't run under stock Electron | High | Investigate signing/entitlement changes at pre-flight |
+| R3 | Electron major bump breaks native modules with no Figma-matched alternative | High | Track Figma's Electron; escalate in issues if mismatched |
+| R4 | CDN staleness causes wrong version to be built | Medium | Installer-authoritative policy + regression test |
+| R5 | Maintainer bandwidth | Medium | Automation (Phase 3) reduces per-release manual work |
+| R6 | Legal/trademark confusion with Figma, Inc. | Medium | Keep explicit "unofficial, proprietary software, ToS applies" notices |
+
+---
+
+## 11. Success metrics
+
+| Metric | Target |
+| --- | --- |
+| Max lag from Figma release to fig-forge release | ≤ 72 hours |
+| Automated test pass rate on release branches | 100% |
+| Silent patch failures | 0 (sentinels enforce) |
+| Users stranded by a version cutoff | 0 |
+| Reproduced regressions with no tracking issue | 0 |
+
+---
+
+## 12. Decision log
+
+| Date | Decision | Rationale |
+| --- | --- | --- |
+| 2026-11-23 | Rename to fig-forge, keep `upstream` remote | Respect archival; credit maintainer; preserve provenance |
+| 2026-11-23 | Do not patch out the Dec 15 banner | It is server-driven; patching would not restore service |
+| 2026-11-23 | Trust installer version over `RELEASES` on mismatch | Installer was newer and embedded a newer full nupkg |
+| 2026-11-23 | Pin `@electron/asar` 4.2.0 | Higher versions reject Figma's `-1000` header entries |
+| 2026-11-23 | Fast-path execution (no agent pipeline) for Phase 0 | User-selected workflow |
+
+---
+
+## 13. Primary sources
+
+- Figma Help Center, *Guide to the Figma desktop app* — https://help.figma.com/hc/en-us/articles/5601429983767 (article API: `/api/v2/help_center/articles/5601429983767.json`, updated 2026-11-22)
+- Figma Windows release manifest — https://desktop.figma.com/win/RELEASES
+- Figma Windows installer — https://desktop.figma.com/win/FigmaSetup.exe
+- Upstream archived repo — https://github.com/IliyaBrook/figma-linux
+- This repo — https://github.com/mhdztr/fig-forge
