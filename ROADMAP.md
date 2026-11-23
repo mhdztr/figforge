@@ -281,8 +281,16 @@ Release tracker: [mhdztr/figforge#1](https://github.com/mhdztr/figforge/issues/1
 
 ## 7. Phase 3 — Automation and guardrails
 
-**Status: IMPLEMENTED (2026-11-23).** All items below are in `master`; only live
-GitHub-side observation of the daily cron remains.
+**Status: IMPLEMENTED AND VERIFIED (2026-11-23).** All items below are in
+`master`, and each workflow was dispatched once on GitHub:
+
+| Workflow | Run | Result |
+| --- | --- | --- |
+| `version-watch` | [45182092810](https://github.com/mhdztr/figforge/actions/runs/45182092810) | Pass — `manifest 126.11.11`, `installer 126.12.7`, `tracked 126.12.7`, `drift false`; no duplicate issue opened |
+| `release-matrix` | [45182235520](https://github.com/mhdztr/figforge/actions/runs/45182235520) | Pass — AppImage (52s), deb (1m16s), rpm (3m27s) built from one installer; all `SHA256SUMS` verified |
+| `installer-update-tests` | [45182900634](https://github.com/mhdztr/figforge/actions/runs/45182900634) | Pass — 75 tests (73 pass / 0 fail / 2 skipped), shell syntax, shellcheck, version pin, AppImage smoke |
+
+Only the first scheduled cron execution remains to be observed.
 
 | ID | Work | Outcome | Implementation |
 | --- | --- | --- | --- |
