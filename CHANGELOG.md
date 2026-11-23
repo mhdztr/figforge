@@ -4,7 +4,13 @@ All notable changes to **figforge** are documented here. Each entry tracks one F
 
 ## [126.12.7-r1] — 2026-11-23
 
-Rebuild of the `126.12.7` client with two Phase 4 fixes. The Figma client, Electron and Chromium versions are unchanged from [126.12.7]; only the figforge build/launcher code differs. Artifact checksums are in the attached `SHA256SUMS`.
+Rebuild of the `126.12.7` client with two Phase 4 fixes. The Figma client, Electron and Chromium versions are unchanged from [126.12.7]; only the figforge build/launcher code differs. Artifact checksums were verified from the published release.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| AppImage | `b47868013d3723e274e464ecf245f88e87c5b58f9cfa98e13aee0fb1906a8c5f` |
+| deb | `c247428ae8b7410a508d42e5c7d69c8e7e90443ddf93c2523f47d6cf8c7a8073` |
+| rpm | `36856301503d79e6db4fdc76bb9398b756632585b2184dc138ea91be82f9cf0e` |
 
 ### Fixed
 
@@ -72,4 +78,5 @@ First tracked release of the maintained fork. The `RELEASES` manifest still adve
 - Issue #23 (canvas corruption on Fedora 44 / Mesa 26) expected to be resolved by Chromium 152, not yet verified.
 - Users on builds older than June 2026 should upgrade before Figma's **15 December** support cutoff. This release tracks the current client; the December notice shown by older builds is a real server-side version gate, so it is deliberately not hidden by a UI patch.
 
+[126.12.7-r1]: https://github.com/mhdztr/figforge/releases/tag/v126.12.7-r1
 [126.12.7]: https://github.com/mhdztr/figforge/releases/tag/v126.12.7

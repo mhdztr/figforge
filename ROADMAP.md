@@ -317,11 +317,13 @@ Only the first scheduled cron execution remains to be observed.
 
 Priority: P0 blocks release, P1 blocks Wayland parity, P2 quality, P3 polish.
 
-**Progress (2026-11-23):** B5 and B9 are fixed in `v126.12.7-r1` with fixture
-tests that read the real patch regexes out of `build.sh`. B4's modern tray
-shape was already patched in the base release and re-verified in the r1 build.
-B1–B3, B6–B8, B10–B12 remain open; most need a human desktop session or a
-specific GPU/display combination to confirm.
+**Progress (2026-11-23):** B5 and B9 are fixed in [v126.12.7-r1](https://github.com/mhdztr/figforge/releases/tag/v126.12.7-r1)
+with fixture tests that read the real patch regexes out of `build.sh`. B4's
+modern tray shape was already patched in the base release and re-verified in
+the r1 build. Release artifacts came from [matrix run 45186400778](https://github.com/mhdztr/figforge/actions/runs/45186400778);
+the [test gate 45186385474](https://github.com/mhdztr/figforge/actions/runs/45186385474)
+also passed. B1–B3, B6–B8, B10–B12 remain open; most need a human desktop
+session or a specific GPU/display combination to confirm.
 
 | ID | Issue | Source | Priority | Notes |
 | --- | --- | --- | --- | --- |
