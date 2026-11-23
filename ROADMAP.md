@@ -317,8 +317,11 @@ Only the first scheduled cron execution remains to be observed.
 
 Priority: P0 blocks release, P1 blocks Wayland parity, P2 quality, P3 polish.
 
-**Progress (2026-11-23):** B5 and B9 are fixed in [v126.12.7-r1](https://github.com/mhdztr/figforge/releases/tag/v126.12.7-r1)
-with fixture tests that read the real patch regexes out of `build.sh`. B4's
+**Progress (2026-11-23):** B5 and B9 are fixed in [v126.12.7-r1](https://github.com/mhdztr/figforge/releases/tag/v126.12.7-r1);
+r2 adds the missing upgrade migration for pre-marker desktop entries. B11
+(NVIDIA PRIME offload) is confirmed at the GL level on this host — a bounded
+Figma launch under `__NV_PRIME_RENDER_OFFLOAD=1` exposed a healthy GPU process,
+but visual canvas output still needs a human check. B4's
 modern tray shape was already patched in the base release and re-verified in
 the r1 build. Release artifacts came from [matrix run 45186400778](https://github.com/mhdztr/figforge/actions/runs/45186400778);
 the [test gate 45186385474](https://github.com/mhdztr/figforge/actions/runs/45186385474)
@@ -335,9 +338,9 @@ session or a specific GPU/display combination to confirm.
 | B6 | Installed fonts supersede other fonts | #15 | P2 | Font-agent interaction |
 | B7 | Drag-and-drop unsupported | #12 | P2 | Native binding gap |
 | B8 | Pinch zoom unsupported | #11 | P2 | Native binding gap |
-| B9 | `.desktop` overwritten every launch | #32 | P2 | ✅ Fixed in `v126.12.7-r1` — marked generated file, custom `Exec` flags preserved |
+| B9 | `.desktop` overwritten every launch | #32 | P2 | ✅ Fixed in `v126.12.7-r1`, upgrade migration in r2 — marked generated file, custom `Exec` flags preserved |
 | B10 | Eyedropper / font-preview endpoint 404 | README | P2 | Documented limitation |
-| B11 | Direct NVIDIA hardware rendering unverified | release notes | P2 | Test matrix gap |
+| B11 | Direct NVIDIA hardware rendering unverified | release notes | P2 | PRIME offload verified at GL level (RTX 3050, driver 620.73.04); GPU process starts under Figma — visual canvas check still needed |
 | B12 | Fresh browser sign-in / logout unverified | release notes | P1 | Auth is load-bearing |
 
 ---
@@ -388,6 +391,7 @@ The only thing that changes between versions is the version number and whatever 
 | 2026-11-23 | Trust installer version over `RELEASES` on mismatch | Installer was newer and embedded a newer full nupkg |
 | 2026-11-23 | Pin `@electron/asar` 4.2.0 | Higher versions reject Figma's `-1000` header entries |
 | 2026-11-23 | Fast-path execution (no agent pipeline) for Phase 0 | User-selected workflow |
+| 2026-11-23 | Remove inherited Telegram/OpenClaw workflow | Upstream-only secrets and self-hosted runner are absent here; every issue/discussion event failed at startup |
 
 ---
 

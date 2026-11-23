@@ -69,3 +69,22 @@ test('a desktop entry without our marker is treated as user-managed', async () =
   await integrate();
   assert.equal(await fs.readFile(desktopFile, 'utf8'), external);
 });
+
+test('a legacy generated entry is migrated instead of staying on the old path', async () => {
+  const legacy = `[Desktop Entry]
+Name=Figma
+Exec="/opt/figma/previous.AppImage" --enable-features=Vulkan %u
+Icon=figma-desktop
+Type=Application
+Terminal=false
+Categories=Graphics;
+Comment=Figma Desktop for Linux (AppImage)
+MimeType=x-scheme-handler/figma;
+StartupWMClass=Figma
+`;
+  await fs.writeFile(desktopFile, legacy);
+  await integrate();
+  const content = await fs.readFile(desktopFile, 'utf8');
+  assert.match(content, /^Exec="\/opt\/figma\/figma-desktop-126\.12\.7-amd64\.AppImage" --enable-features=Vulkan %u$/m);
+  assert.match(content, /^X-Figforge-AppImage=\/opt\/figma\/figma-desktop-126\.12\.7-amd64\.AppImage$/m);
+});

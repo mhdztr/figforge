@@ -84,11 +84,11 @@ The build script performs a multi-stage pipeline:
 ## Installation
 
 > [!IMPORTANT]
-> Figma ends support for older desktop clients on **15 December 2026**. If you are running a pre-June build, upgrade to [v126.12.7-r1](https://github.com/mhdztr/figforge/releases/tag/v126.12.7-r1) (or the latest release) before then. The December warning shown by old clients is a real server-side version gate — hiding it would not restore service. This project tracks new Figma clients so you always have a supported build.
+> Figma ends support for older desktop clients on **15 December 2026**. If you are running a pre-June build, upgrade to [v126.12.7-r2](https://github.com/mhdztr/figforge/releases/tag/v126.12.7-r2) (or the latest release) before then. The December warning shown by old clients is a real server-side version gate — hiding it would not restore service. This project tracks new Figma clients so you always have a supported build.
 
 ### Option 1: Download an Existing AppImage
 
-Download the latest maintained AppImage, deb, or rpm from the [Releases](https://github.com/mhdztr/figforge/releases) page. Each release tracks a specific Figma Desktop version; see the release notes for the exact version and Electron build. The current tracked client is **Figma Desktop 126.12.7**, rebuilt as [v126.12.7-r1](https://github.com/mhdztr/figforge/releases/tag/v126.12.7-r1) ([release notes](https://github.com/mhdztr/figforge/releases/tag/v126.12.7-r1), [changelog](CHANGELOG.md)).
+Download the latest maintained AppImage, deb, or rpm from the [Releases](https://github.com/mhdztr/figforge/releases) page. Each release tracks a specific Figma Desktop version; see the release notes for the exact version and Electron build. The current tracked client is **Figma Desktop 126.12.7**, rebuilt as [v126.12.7-r2](https://github.com/mhdztr/figforge/releases/tag/v126.12.7-r2) ([release notes](https://github.com/mhdztr/figforge/releases/tag/v126.12.7-r2), [changelog](CHANGELOG.md)).
 
 ```bash
 chmod +x figma-desktop-*.AppImage

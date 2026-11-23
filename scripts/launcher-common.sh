@@ -144,7 +144,7 @@ integrate_appimage_desktop() {
 	local desktop_file="$desktop_dir/figma-desktop-appimage.desktop"
 	local marker_prefix='X-Figforge-AppImage='
 	local marker='' current_exec='' custom_args=' %u'
-	local icon_changed=false desktop_changed=false
+	local icon_changed=false desktop_changed=false legacy_generated=false
 	local exec_re='^Exec="[^"]*"(.*)$'
 
 	mkdir -p "$desktop_dir" "$icon_dir" 2>/dev/null || return 0
@@ -164,9 +164,19 @@ integrate_appimage_desktop() {
 			custom_args=${BASH_REMATCH[1]}
 			[[ -n $custom_args ]] || custom_args=' %u'
 		fi
+		# Entries written by figforge before the marker existed carry this exact
+		# signature. Migrate them once so an upgrade does not keep launching the
+		# previous AppImage, while still preserving any custom Exec flags.
+		if [[ -z $marker ]] \
+			&& grep -qxF 'Comment=Figma Desktop for Linux (AppImage)' "$desktop_file" 2>/dev/null \
+			&& grep -qxF 'StartupWMClass=Figma' "$desktop_file" 2>/dev/null; then
+			legacy_generated=true
+		fi
 	fi
 
 	if [[ ! -f $desktop_file ]]; then
+		desktop_changed=true
+	elif [[ $legacy_generated == true ]]; then
 		desktop_changed=true
 	elif [[ -n $marker && $marker != "$marker_prefix$appimage_path" ]]; then
 		# Our file, but the AppImage was moved/renamed. Keep the user's flags.
