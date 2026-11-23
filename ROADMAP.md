@@ -249,6 +249,8 @@ Environment: `EndeavourOS` (Arch-based), Node v26.8.1, X11 `:0` + Hyprland Wayla
 
 ## 6. Phase 2 — Ship before the December cutoff
 
+**Status: COMPLETE (2026-11-23).** Release [v126.12.7](https://github.com/mhdztr/figforge/releases/tag/v126.12.7) published with AppImage, deb, rpm and verified `SHA256SUMS`; tag points to `b33550d`. Only the 72-hour monitoring window remains open. See §6.1.
+
 1. Freeze `release/126.12.7` from a Phase-1-passing commit.
 2. Generate `CHANGELOG.md` entry with: Figma version, Electron version, test matrix, known issues.
 3. Build all three artifacts from a clean checkout; verify SHA256SUMS.
@@ -271,7 +273,7 @@ Release tracker: [mhdztr/figforge#1](https://github.com/mhdztr/figforge/issues/1
 | 4. Tag + GitHub Release with notes/checksums | ✅ | Tag `v126.12.7`; release notes from `CHANGELOG.md`; `SHA256SUMS` attached and verified. |
 | 5. README links / version badge | ✅ | `Figma Desktop 126.12.7` badge, direct release link, changelog link. |
 | 6. December-cutoff announcement | ✅ | README `IMPORTANT` banner: pre-June builds must upgrade before 15 Dec; notice is a real server-side version gate, not a UI string to hide. |
-| 7. 72-hour monitor | ⏳ | Starts after publish; tracker #1 is the collection point. Announcement discussion [#2](https://github.com/mhdztr/figforge/discussions/2) is live. |
+| 7. 72-hour monitor | 🔄 | Started after publish on 2026-11-23; tracker [#1](https://github.com/mhdztr/figforge/issues/1) and announcement [#2](https://github.com/mhdztr/figforge/discussions/2) are live. |
 
 **Packaging strategy note:** the host is EndeavourOS with no passwordless sudo and no `dpkg-deb`/`rpmbuild`. Docker is available, so native packages are built inside Debian/Fedora containers using the same `build.sh` and the same local `FigmaSetup.exe` as the AppImage. This gives real dpkg/rpm toolchain verification without modifying the host.
 

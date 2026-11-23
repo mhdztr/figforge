@@ -228,6 +228,26 @@ server-side support cutoff. This build reports version <version>.
   3. Publish `v<version>-r1` rather than deleting the original; mark the original with a known-issue note.
 - Never silently replace release assets.
 
+### 10.1 Native packaging on hosts without dpkg/rpm tooling
+
+A release host does not need `dpkg-deb` or `rpmbuild` installed locally. Build the native packages in disposable distro containers against the same checkout and the same local installer:
+
+```bash
+# Debian / Ubuntu
+docker run --rm -e CI=1 -v "$PWD:/work" debian:bookworm-slim bash -lc '
+  apt-get update && apt-get install -y p7zip-full wget curl imagemagick dpkg-dev ca-certificates xz-utils
+  cd /work && ./build.sh --build deb --clean no --exe /work/FigmaSetup.exe'
+apt-get install ./figma-desktop_<version>_amd64.deb   # on a real Debian/Ubuntu host
+
+# Fedora / RHEL
+docker run --rm -e CI=1 -v "$PWD:/work" fedora:41 bash -lc '
+  dnf install -y p7zip p7zip-plugins wget curl ImageMagick rpm-build nodejs npm tar xz
+  cd /work && ./build.sh --build rpm --clean no --exe /work/FigmaSetup.exe'
+dnf install ./figma-desktop-<version>-1.x86_64.rpm    # on a real Fedora/RHEL host
+```
+
+Then verify with `dpkg -s` / `rpm -q`, confirm `/usr/bin/figma-desktop` and the `.desktop` entry, and remove the package in a fresh container before publishing. This is how v126.12.7 was verified; never replace a container check with "the script exited 0" on a host that skipped packaging.
+
 ---
 
 ## 11. Failure signatures and first response
