@@ -71,6 +71,11 @@ These are the literal strings the build's `sed` patches operate on. If any count
 | `main.js` | `process.platform==="win32"&&(this.windowsAppMenu=` | 1 | Enable app menu on Linux |
 | `desktop_shell.js` | `frame:!1` / `frame:!0` / `frame:false` | 0 / 0 / 0 | Same as above if present |
 | `shell.html` | `</head>` | 1 | Injection point for CSS patch |
+| `main.js` | `this.electronTray?.popUpContextMenu(` | 1 | Modern tray handler — legacy null-check form is also accepted |
+| `main.js` | `async handleCommandLineArgs(e){let n=e.slice(1)` | 1 | Upstream native Linux argv handling; if present the legacy argv patch is skipped |
+| `main.js` | `setAlwaysOnTop(!0,"pop-up-menu")` | 1 | Tray notification window injection point |
+
+Since Phase 1 these are **fail-loud**: the native-frame/title/menu/`</head>` sentinels are asserted before patching, and each regex-based patch aborts the build on no-match. A `0` count now stops the release rather than producing a silently broken client. `scripts/tests/patch-sentinels.test.js` guards the guards.
 
 Quick check:
 
@@ -232,7 +237,9 @@ server-side support cutoff. This build reports version <version>.
 | `selected_version` is old | CDN cached installer | Re-run; if persistent, download installer directly and use `--exe` |
 | `Could not detect Electron version` | Binary string format changed | Inspect `strings Figma.exe`; extend regex; set `FIGMA_ELECTRON_VERSION` temporarily |
 | `Extracted: 0 files` / asar error | Header format change / asar version drift | Confirm pin 4.2.0; diff `getRawHeader` output |
-| Patch count `0` | Minifier changed the literal | Add new sentinel + patch; keep old as no-op-safe |
+| Patch count `0` | Minifier changed the literal | Build now aborts; add a new sentinel + pattern, keep the old one as no-op-safe |
+| Regex works in a standalone Node REPL but not in the build | Bare `"` inside a bash `node -e "..."` string is stripped by bash | Escape every embedded `"` as `\"`; see the tray-window patch in `build.sh` |
+| Tray context menu does not open | Figma switched to `this.electronTray?.popUpContextMenu(...)` | Add the optional-chaining pattern; inject `setContextMenu()` |
 | Auth fails at login | Electron/Figma major mismatch | Verify detected Electron equals embedded; do not proceed with fallback |
 | Canvas shredded | Chromium/Mesa combo | Compare with issue #23; try XWayland; record |
 

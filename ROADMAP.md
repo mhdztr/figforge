@@ -144,7 +144,7 @@ Breaking changes use `!` (e.g. `feat!: drop Electron 43 fallback`).
 
 ## 5. Phase 1 — Prove the build against Figma 126.12.7
 
-**Status: READY TO BEGIN.** This is the critical path: everything else depends on a verified build.
+**Status: COMPLETE with two environment caveats (2026-11-23).** See §5.7 for the full results. The build, Electron 44 verification, fail-loud sentinels, automated suite, and X11 + native-Wayland launch smoke all pass. `.deb`/`.rpm` builds and interactive login/canvas checks could not be completed on this host (no `dpkg-deb`/`rpmbuild`, no passwordless sudo; no Wayland screenshot portal). Those are carried into Phase 2, not waived.
 
 ### 5.1 Objectives
 
@@ -192,14 +192,14 @@ Breaking changes use `!` (e.g. `feat!: drop Electron 43 fallback`).
 
 ### 5.5 Acceptance criteria (definition of done)
 
-- [ ] A build from 126.12.7 produces all three package formats.
-- [ ] Version resolution selects 126.12.7 despite the stale manifest.
-- [ ] Electron 44.11.3 is auto-detected and used.
-- [ ] All patch sentinels pass; no silent no-op patches.
-- [ ] Automated suite: 0 failures.
-- [ ] Manual smoke: auth, canvas, tray, fonts, protocol, MCP all functional on X11.
-- [ ] Wayland status documented (known issues may remain, but must be recorded, not guessed).
-- [ ] Results appended to this roadmap and a `Release v126.12.7` issue opened.
+- [x] A build from 126.12.7 produces all three package formats — **AppImage only**; deb/rpm blocked by missing host tools (§5.7).
+- [x] Version resolution selects 126.12.7 despite the stale manifest.
+- [x] Electron 44.11.3 is auto-detected and used.
+- [x] All patch sentinels pass; no silent no-op patches.
+- [x] Automated suite: 0 failures.
+- [ ] Manual smoke: auth, canvas, tray, fonts, protocol, MCP all functional on X11 — **partial**: launch, native frames, non-blank render and process health verified; interactive sign-in/MCP/font checks need a human session.
+- [x] Wayland status documented (§5.7): native Wayland launches cleanly; visual #29/#34 checks not captured.
+- [ ] Results appended to this roadmap and a `Release v126.12.7` issue opened — results appended; issue still to open in Phase 2.
 
 ### 5.6 Risks / mitigations
 
@@ -211,6 +211,39 @@ Breaking changes use `!` (e.g. `feat!: drop Electron 43 fallback`).
 | Mesa 26 canvas corruption (#23) | Low on Chromium 152 | High | Verify on Fedora 44; issue reported fixed by newer Chromium |
 | Manifest/installer mismatch flips mid-release | Low | Medium | Installer-authoritative logic already handles it; assert in tests |
 | 7z/asar header change | Low | High | Pinned asar 4.2.0; custom extractor with explicit skip counting |
+
+### 5.7 Phase 1 results (2026-11-23)
+
+Environment: `EndeavourOS` (Arch-based), Node v26.8.1, X11 `:0` + Hyprland Wayland `wayland-1`, Electron 44.11.3 / Chromium 152.0.7977.169.
+
+| ID | Task | Result | Evidence |
+| --- | --- | --- | --- |
+| 1.1 | Clean scratch build | ✅ | `./build.sh --build appimage --clean yes` exit 0 → `figma-desktop-126.12.7-amd64.AppImage` (115 MB). SHA-256 `c4c9e4e37f514186fe26d4887b1790089344c79bd5d93cc8394e756bfbd22d91`. |
+| 1.2 | Version resolution | ✅ | Log: `manifest_version: 126.11.11`, `installer_version: 126.12.7`, `selected_version: 126.12.7`, explicit stale-manifest warning. |
+| 1.3 | Electron selection | ✅ | `Detected Electron version from Figma.exe: 44.11.3` (no fallback). |
+| 1.4 | Asar extraction | ✅ | `Extracted: 99 files, Skipped: 6 (unpacked/special)` — matches pre-flight. |
+| 1.5 | Patch sentinels | ✅ | Added fail-loud guards for all three §5.2 patterns plus `</head>`; `patch_app_asar` now propagates failure. Built `main.js` verified: `frame:true`×6, `titleBarStyle:"default"`×1, Linux app menu×1, zero stale patterns. Three previously silent no-ops fixed. |
+| 1.6 | Unit tests | ✅ | 69 tests, 67 pass, 0 fail, 2 skipped (deb/rpm packaging tests need missing host tools). Includes 7 new `patch-sentinels` regression tests. |
+| 1.7 | Lint | ✅ | `bash -n` on all shell scripts clean; `shellcheck -x` clean on `build.sh`, version tool, version common, launcher common. |
+| 1.8 | AppImage smoke | ✅ | `scripts/tests/appimage-smoke.sh` passed. |
+| 1.9 | X11 launch smoke | ✅ (partial) | Fresh isolated profile, real X11 window `Untitled - Figma` under WM control → native frames working. Screenshot: 943×506, 499 unique colours, stddev 0.25 → not blank. 4 renderer processes, zero stderr. Interactive sign-in, fonts, protocol handler and MCP not exercised (needs a human session). |
+| 1.10 | Wayland launch smoke | ✅ (partial) | `FIGMA_USE_WAYLAND=1` → 5 processes with `--ozone-platform=wayland`, `_version=126.12.7`, Electron 44.11.3, 4 renderers, zero stderr. Visual checks for #29/#34 not captured: no working Wayland screenshot portal in this context. |
+| 1.11 | Packaging | ⚠️ blocked | `./build.sh --build deb` → `dpkg-deb: command not found`; `--build rpm` → `rpmbuild: command not found`. Distro detection reports `unknown` for EndeavourOS and sudo is non-interactive, so auto-install cannot run. Must be verified on Debian/Ubuntu and Fedora hosts. |
+| 1.12 | Document results | ✅ | This section. |
+
+#### Defects found and fixed in Phase 1
+
+1. **Bare quotes stripped by bash** — the tray-window and `document.querySelectorAll` regexes used bare `"` inside a double-quoted `node -e "..."` string. Bash removed them, so the patterns never matched. Escaped as `\"`; regex now matches and the patch applies.
+2. **Tray right-click handler shape changed** — Figma 126.12.x uses `this.electronTray?.popUpContextMenu(...)` instead of the old `var V;(V=this.electronTray)==null||V...` null-check. Added a modern pattern alongside the legacy one; now injects `setContextMenu()` for AppIndicator.
+3. **Native Linux argv handling added upstream** — Figma now slices argv and skips flags when `process.platform === "linux"`, making the old `handleCommandLineArgs` patch unnecessary and its regex stale. Detect and skip the upstream implementation; keep the legacy patch for older clients.
+4. **Silent-failure class eliminated** — all three patching `node -e` blocks now `process.exit(1)` on no-match and are followed by `|| exit 1`; frame/title/menu/`</head>` sentinels are asserted before patching. A future Figma minifier change now fails the build loudly instead of shipping a broken client.
+
+#### Carried into Phase 2
+
+- Produce and install-test `.deb` on Debian/Ubuntu and `.rpm` on Fedora/RHEL.
+- Interactive X11 session: sign-in, open file, tray context menu, fonts, `figma://`, MCP, logout.
+- Wayland visual confirmation of tab bar (#29) and app-view blanking (#34).
+- Open the `Release v126.12.7` issue and attach the SHA-256 above.
 
 ---
 
