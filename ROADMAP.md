@@ -317,17 +317,23 @@ Only the first scheduled cron execution remains to be observed.
 
 Priority: P0 blocks release, P1 blocks Wayland parity, P2 quality, P3 polish.
 
+**Progress (2026-11-23):** B5 and B9 are fixed in `v126.12.7-r1` with fixture
+tests that read the real patch regexes out of `build.sh`. B4's modern tray
+shape was already patched in the base release and re-verified in the r1 build.
+B1–B3, B6–B8, B10–B12 remain open; most need a human desktop session or a
+specific GPU/display combination to confirm.
+
 | ID | Issue | Source | Priority | Notes |
 | --- | --- | --- | --- | --- |
 | B1 | App view blanking on Electron 43 X11/XWayland/Wayland | #34 | P1 | Retest on Electron 44 before assuming fixed |
 | B2 | Wayland tab bar black/transparent | #29 | P1 | Retest on 44.11.3 |
 | B3 | Canvas corruption on Fedora 44 / Mesa 26 | #23 | P1 | Chromium 152 expected to fix; verify |
 | B4 | Tray context menu broken on Figma 126.10+ | #35 | P1 | Patch target may have moved in main.js |
-| B5 | Tray icon dark mode | #36 | P3 | Cosmetic |
+| B5 | Tray icon dark mode | #36 | P3 | ✅ Fixed in `v126.12.7-r1` — platform gate removed, stub already reads `nativeTheme` |
 | B6 | Installed fonts supersede other fonts | #15 | P2 | Font-agent interaction |
 | B7 | Drag-and-drop unsupported | #12 | P2 | Native binding gap |
 | B8 | Pinch zoom unsupported | #11 | P2 | Native binding gap |
-| B9 | `.desktop` overwritten every launch | #32 | P2 | Launcher/packaging fix |
+| B9 | `.desktop` overwritten every launch | #32 | P2 | ✅ Fixed in `v126.12.7-r1` — marked generated file, custom `Exec` flags preserved |
 | B10 | Eyedropper / font-preview endpoint 404 | README | P2 | Documented limitation |
 | B11 | Direct NVIDIA hardware rendering unverified | release notes | P2 | Test matrix gap |
 | B12 | Fresh browser sign-in / logout unverified | release notes | P1 | Auth is load-bearing |

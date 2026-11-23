@@ -2,6 +2,24 @@
 
 All notable changes to **figforge** are documented here. Each entry tracks one Figma Desktop client release; the app itself remains Figma Desktop, with Figma's name, icon and interface unchanged.
 
+## [126.12.7-r1] — 2026-11-23
+
+Rebuild of the `126.12.7` client with two Phase 4 fixes. The Figma client, Electron and Chromium versions are unchanged from [126.12.7]; only the figforge build/launcher code differs. Artifact checksums are in the attached `SHA256SUMS`.
+
+### Fixed
+
+- **B9 / upstream #32** — the AppImage no longer rewrites `~/.local/share/applications/figma-desktop-appimage.desktop` on every launch. The generated entry now carries an `X-Figforge-AppImage=` marker; user-edited `Exec` flags (e.g. `--enable-features=Vulkan,WebGPU`) survive restarts and are preserved when the AppImage path changes. A file without our marker is treated as user-managed and left alone.
+- **B5 / upstream #36** — the tray icon follows the system light/dark theme on Linux. Figma gated both `isSystemDarkMode()` and the `nativeTheme` update listener behind `process.platform === "win32"`; the build now drops that gate while keeping the existing Linux stub implementation.
+
+### Test matrix
+
+| Check | Result |
+| --- | --- |
+| Full suite | 83 tests: 81 pass, 0 fail, 2 skipped (deb/rpm host tools absent) |
+| New fixture tests | `desktop-integration.test.js` (4), `tray-icon-theme.test.js` (4) — regexes are read directly from `build.sh`, so pattern drift fails CI |
+| `bash -n` + `shellcheck -x` | Pass |
+| Clean AppImage build (`--clean yes`) | Pass — both patches verified inside the extracted `app.asar` and `AppRun` |
+
 ## [126.12.7] — 2026-11-23
 
 First tracked release of the maintained fork. The `RELEASES` manifest still advertised `126.11.11`, so the build used the installer-embedded NuGet package as the version authority (see [MAINTENANCE.md](MAINTENANCE.md)).

@@ -75,56 +75,9 @@ setup_logging || exit 1
 setup_electron_env
 
 # --- Desktop Integration for figma:// URL scheme ---
-# Register .desktop file so the system knows how to handle figma:// URLs
-integrate_desktop() {
-	local desktop_dir="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
-	local icon_dir="${XDG_DATA_HOME:-$HOME/.local/share}/icons/hicolor/256x256/apps"
-	local desktop_file="$desktop_dir/figma-desktop-appimage.desktop"
-	local needs_update=false
-
-	mkdir -p "$desktop_dir" "$icon_dir" 2>/dev/null
-
-	# Copy icon if available
-	local icon_src="$appdir/io.github.nickvdp.figma-desktop-linux.png"
-	local icon_dest="$icon_dir/figma-desktop.png"
-	if [[ -f $icon_src ]]; then
-		if [[ ! -f $icon_dest ]] || ! cmp -s "$icon_src" "$icon_dest"; then
-			cp "$icon_src" "$icon_dest" 2>/dev/null
-			needs_update=true
-		fi
-	fi
-
-	# Create/update .desktop file if AppImage path changed or file doesn't exist
-	local current_exec=''
-	[[ -f $desktop_file ]] && current_exec=$(grep '^Exec=' "$desktop_file" 2>/dev/null | head -1)
-
-	if [[ ! -f $desktop_file ]] || [[ $current_exec != "Exec=\"${appimage_path}\" %u" ]]; then
-		cat > "$desktop_file" << DESKTOP
-[Desktop Entry]
-Name=Figma
-Exec="${appimage_path}" %u
-Icon=figma-desktop
-Type=Application
-Terminal=false
-Categories=Graphics;
-Comment=Figma Desktop for Linux (AppImage)
-MimeType=x-scheme-handler/figma;
-StartupWMClass=Figma
-DESKTOP
-		needs_update=true
-		log_message "Desktop file created/updated: $desktop_file"
-	fi
-
-	# Update MIME database if changed
-	if [[ $needs_update == true ]]; then
-		update-desktop-database "$desktop_dir" 2>/dev/null || true
-		xdg-mime default figma-desktop-appimage.desktop x-scheme-handler/figma 2>/dev/null || true
-		log_message 'Desktop integration updated (figma:// URL scheme registered)'
-	fi
-}
-
-# Run desktop integration (non-blocking, errors are non-fatal)
-integrate_desktop 2>/dev/null || true
+# Lives in launcher-common.sh so the behaviour is unit-testable. It only writes
+# the generated entry once; user edits to Exec are preserved on later launches.
+integrate_appimage_desktop "$appdir" "$appimage_path" 2>/dev/null || true
 
 # Detect display backend
 if ! check_display; then

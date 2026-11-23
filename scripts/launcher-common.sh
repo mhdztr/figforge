@@ -130,3 +130,70 @@ register_url_scheme() {
 	command -v xdg-mime > /dev/null 2>&1 || return 0
 	xdg-mime default "$desktop_id" x-scheme-handler/figma > /dev/null 2>&1 || true
 }
+
+# Create the AppImage desktop entry once, and only regenerate it when the
+# AppImage itself moves. Users routinely add their own Exec flags (GPU features,
+# touch gestures); overwriting those on every launch is a regression (upstream
+# #32). A generated X-Figforge-AppImage marker distinguishes our file from a
+# user-managed one, and custom Exec arguments are preserved when the path moves.
+# Usage: integrate_appimage_desktop <appdir> <appimage_path>
+integrate_appimage_desktop() {
+	local appdir=$1 appimage_path=$2
+	local desktop_dir="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
+	local icon_dir="${XDG_DATA_HOME:-$HOME/.local/share}/icons/hicolor/256x256/apps"
+	local desktop_file="$desktop_dir/figma-desktop-appimage.desktop"
+	local marker_prefix='X-Figforge-AppImage='
+	local marker='' current_exec='' custom_args=' %u'
+	local icon_changed=false desktop_changed=false
+	local exec_re='^Exec="[^"]*"(.*)$'
+
+	mkdir -p "$desktop_dir" "$icon_dir" 2>/dev/null || return 0
+
+	local icon_src="$appdir/io.github.nickvdp.figma-desktop-linux.png"
+	local icon_dest="$icon_dir/figma-desktop.png"
+	if [[ -f $icon_src ]]; then
+		if [[ ! -f $icon_dest ]] || ! cmp -s "$icon_src" "$icon_dest"; then
+			cp "$icon_src" "$icon_dest" 2>/dev/null && icon_changed=true
+		fi
+	fi
+
+	if [[ -f $desktop_file ]]; then
+		marker=$(grep "^$marker_prefix" "$desktop_file" 2>/dev/null | head -1 || true)
+		current_exec=$(grep '^Exec=' "$desktop_file" 2>/dev/null | head -1 || true)
+		if [[ $current_exec =~ $exec_re ]]; then
+			custom_args=${BASH_REMATCH[1]}
+			[[ -n $custom_args ]] || custom_args=' %u'
+		fi
+	fi
+
+	if [[ ! -f $desktop_file ]]; then
+		desktop_changed=true
+	elif [[ -n $marker && $marker != "$marker_prefix$appimage_path" ]]; then
+		# Our file, but the AppImage was moved/renamed. Keep the user's flags.
+		desktop_changed=true
+	fi
+
+	if [[ $desktop_changed == true ]]; then
+		cat > "$desktop_file" << DESKTOP
+[Desktop Entry]
+Name=Figma
+Exec="${appimage_path}"${custom_args}
+Icon=figma-desktop
+Type=Application
+Terminal=false
+Categories=Graphics;
+Comment=Figma Desktop for Linux (AppImage)
+MimeType=x-scheme-handler/figma;
+StartupWMClass=Figma
+$marker_prefix$appimage_path
+DESKTOP
+	fi
+
+	if [[ $icon_changed == true || $desktop_changed == true ]]; then
+		update-desktop-database "$desktop_dir" 2>/dev/null || true
+		xdg-mime default figma-desktop-appimage.desktop x-scheme-handler/figma > /dev/null 2>&1 || true
+		if declare -F log_message > /dev/null 2>&1; then
+			log_message "Desktop integration updated: $desktop_file"
+		fi
+	fi
+}

@@ -1102,6 +1102,38 @@ if (legacy) {
 " || exit 1
 	fi
 
+	# ---- Patch tray icon theme for Linux ----
+	# Figma gates both the dark-mode probe and the theme-change listener on
+	# Windows. The Linux stub already implements isSystemDarkMode() through
+	# Electron's nativeTheme, so enable both paths on every platform.
+	echo 'Patching tray icon theme for Linux...'
+	if [[ -f $main_js ]]; then
+		node -e "
+const fs = require('fs');
+let code = fs.readFileSync('$main_js', 'utf8');
+
+const darkPattern = /function (\w+)\(\)\{return process\.platform!==\"win32\"\?!1:(\w+)\.isSystemDarkMode\(\)\}/;
+const listenerPattern = /(\w+)&&this\.themeCallback&&([\w\$]+)\.nativeTheme\.(addListener|removeListener)\(\"updated\",this\.themeCallback\)/g;
+
+const dark = code.match(darkPattern);
+const listeners = code.match(listenerPattern) || [];
+if (!dark) {
+  console.error('ERROR: Tray dark-mode probe pattern not found - Figma may have updated');
+  process.exit(1);
+}
+if (listeners.length < 2) {
+  console.error('ERROR: Tray theme listener pattern not found - Figma may have updated');
+  process.exit(1);
+}
+
+const [, fnName, binding] = dark;
+code = code.replace(darkPattern, 'function ' + fnName + '(){return ' + binding + '.isSystemDarkMode()}');
+code = code.replace(listenerPattern, (full, flag, electron, method) => 'this.themeCallback&&' + electron + '.nativeTheme.' + method + '(\"updated\",this.themeCallback)');
+fs.writeFileSync('$main_js', code);
+console.log('Tray icon theme patched: system theme + update listener enabled on Linux');
+" || exit 1
+	fi
+
 	# ---- Patch tray window: CSS fixes + DevTools debug support ----
 	# Fix notification dropdown: remove border-radius, fix scroll, and
 	# when FIGMA_DEBUG=1, open DevTools for the tray notification window.
