@@ -4,7 +4,13 @@ All notable changes to **figforge** are documented here. Each entry tracks one F
 
 ## [126.12.7-r2] — 2026-11-23
 
-Build-only revision of `126.12.7`; no change to the Figma client, Electron or Chromium.
+Build-only revision of `126.12.7`; no change to the Figma client, Electron or Chromium. Artifact checksums were verified from the published release.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| AppImage | `c9c8bc6f9ecb40d34a22b1ce7b8a139b7ebc722290cb5b500110eb3dfbadf7b2` |
+| deb | `6a1417f8940b25b51ec8ed15d52bf4cbeb4b591c9f020a91d9fe5bc9eaf53406` |
+| rpm | `09ed48ef9ec1cc95f411dad0572faa62c683f1148ebfd0ee67de169cd9c281bc` |
 
 ### Fixed
 
