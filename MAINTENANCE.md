@@ -15,6 +15,14 @@
 
 ## 1. Watch — detect the current version
 
+Automated: `.github/workflows/version-watch.yml` runs daily and calls
+`scripts/check-version-drift.sh`. It compares the installer-embedded nupkg
+against `TRACKED_VERSION`, records the `RELEASES` value for context, and opens or
+refreshes a `version-drift` issue when they differ. The issue is idempotent — a
+new drift updates the existing open issue instead of filing duplicates.
+
+Manual equivalent and deeper cross-check:
+
 ```bash
 ./figma-version-tool.sh --json
 # Example observed 2026-11-23:
@@ -272,6 +280,8 @@ Then verify with `dpkg -s` / `rpm -q`, confirm `/usr/bin/figma-desktop` and the 
 | Repo | `mhdztr/figforge` |
 | Upstream | `IliyaBrook/figma-linux` (archived) |
 | Version tool | `./figma-version-tool.sh --json` |
+| Drift check | `./scripts/check-version-drift.sh` (JSON; installer-authoritative) |
+| Tracked version | `TRACKED_VERSION` — bump it with the changelog |
 | Build | `./build.sh --build appimage --clean yes` |
 | Tests | `node --test scripts/tests/*.test.js scripts/font-enum/tests/*.test.js` |
 | Smoke | `bash scripts/tests/appimage-smoke.sh` |

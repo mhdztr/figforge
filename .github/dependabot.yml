@@ -1,0 +1,12 @@
+version: 2
+updates:
+  # The build has no npm dependency tree; @electron/asar is pinned in build.sh
+  # and reviewed through the sentinel tests. Keep Actions current instead.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    labels:
+      - dependencies
+    commit-message:
+      prefix: 'chore(deps)'

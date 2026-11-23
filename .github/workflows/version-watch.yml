@@ -1,0 +1,68 @@
+name: Version watch
+
+# Daily upstream drift check. The installer's embedded nupkg is authoritative;
+# the RELEASES manifest is recorded for context only (it is often stale).
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install archive tools
+        run: sudo apt-get update && sudo apt-get install -y p7zip-full
+
+      - name: Check current upstream version
+        id: drift
+        run: |
+          result=$(./scripts/check-version-drift.sh)
+          printf '%s\n' "$result"
+          printf 'json=%s\n' "$result" >> "$GITHUB_OUTPUT"
+
+      - name: Ensure the drift label exists
+        if: fromJSON(steps.drift.outputs.json).drift
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create version-drift --repo "$GITHUB_REPOSITORY" \
+            --color d876e3 --description 'New upstream Figma Desktop version detected' \
+            2>/dev/null || true
+
+      - name: Open or refresh a drift issue
+        if: fromJSON(steps.drift.outputs.json).drift
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RESULT: ${{ steps.drift.outputs.json }}
+        run: |
+          selected=$(jq -r .selected_version <<<"$RESULT")
+          tracked=$(jq -r .tracked_version <<<"$RESULT")
+          manifest=$(jq -r .manifest_version <<<"$RESULT")
+          body=$(cat <<EOF
+          Figma Desktop **$selected** is available; this repository tracks **$tracked**.
+
+          | Source | Version |
+          | --- | --- |
+          | Installer nupkg (authoritative) | \`$selected\` |
+          | RELEASES manifest (informational) | \`$manifest\` |
+          | TRACKED_VERSION | \`$tracked\` |
+
+          Next steps: run the Phase 1 matrix against the new client, update
+          \`TRACKED_VERSION\`, then cut a release. See \`MAINTENANCE.md\` for the runbook.
+          EOF
+          )
+          issue=$(gh issue list --repo "$GITHUB_REPOSITORY" --label version-drift \
+            --state open --json number --jq '.[0].number // empty')
+          if [[ -n $issue ]]; then
+            gh issue edit "$issue" --repo "$GITHUB_REPOSITORY" --body "$body"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --label version-drift \
+              --title "New Figma Desktop version: $selected" --body "$body"
+          fi

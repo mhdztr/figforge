@@ -1,0 +1,55 @@
+name: Regression on a figforge version
+description: Something that worked in an earlier figforge release now fails
+title: 'Regression on version: '
+labels: ['bug', 'regression']
+body:
+  - type: input
+    id: version
+    attributes:
+      label: figforge release version
+      placeholder: '126.12.7'
+    validations:
+      required: true
+
+  - type: dropdown
+    id: format
+    attributes:
+      label: Package format
+      options:
+        - AppImage
+        - deb
+        - rpm
+        - Source build
+    validations:
+      required: true
+
+  - type: input
+    id: last_good
+    attributes:
+      label: Last working version
+      placeholder: '126.11.11'
+    validations:
+      required: false
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: Include any error text or screenshot description.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      render: shell
+    validations:
+      required: false

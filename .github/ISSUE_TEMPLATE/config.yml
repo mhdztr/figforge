@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Release announcements and questions
+    url: https://github.com/mhdztr/figforge/discussions
+    about: Ask a question or follow release announcements.

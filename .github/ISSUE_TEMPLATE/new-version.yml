@@ -1,0 +1,29 @@
+name: New Figma Desktop version
+description: Report that Figma has shipped a newer desktop client than figforge tracks
+title: 'New Figma Desktop version: '
+labels: ['version-drift']
+body:
+  - type: input
+    id: reported_version
+    attributes:
+      label: New Figma Desktop version
+      description: The version you observed upstream
+      placeholder: '126.13.1'
+    validations:
+      required: true
+
+  - type: input
+    id: source
+    attributes:
+      label: Where you saw it
+      placeholder: 'Figma installer / RELEASES manifest / Figma website'
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before opening
+      options:
+        - label: I checked that `TRACKED_VERSION` in the repository is older than this version
+          required: true

@@ -11,7 +11,10 @@ on:
       - 'scripts/launcher-common.sh'
       - 'scripts/build-*.sh'
       - 'scripts/appimage-toolchain.sh'
+      - 'TRACKED_VERSION'
       - '.github/workflows/installer-update-tests.yml'
+      - '.github/workflows/version-watch.yml'
+      - '.github/workflows/release-matrix.yml'
   pull_request:
     paths:
       - 'build.sh'
@@ -21,7 +24,10 @@ on:
       - 'scripts/launcher-common.sh'
       - 'scripts/build-*.sh'
       - 'scripts/appimage-toolchain.sh'
+      - 'TRACKED_VERSION'
       - '.github/workflows/installer-update-tests.yml'
+      - '.github/workflows/version-watch.yml'
+      - '.github/workflows/release-matrix.yml'
   workflow_dispatch:
 
 jobs:
@@ -39,9 +45,14 @@ jobs:
           for script in build.sh figma-version-tool.sh scripts/*.sh scripts/tests/*.sh; do
             bash -n "$script" || exit 1
           done
+      - name: Validate the tracked version pin
+        run: |
+          grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' TRACKED_VERSION
+          printf 'Tracking Figma Desktop %s\n' "$(<TRACKED_VERSION)"
+
       - name: Test installer updates and launcher selection without upstream downloads
         run: node --test scripts/tests/*.test.js scripts/font-enum/tests/*.test.js
       - name: Lint version discovery and launcher scripts
-        run: shellcheck -x figma-version-tool.sh scripts/figma-version-common.sh scripts/launcher-common.sh
+        run: shellcheck -x figma-version-tool.sh scripts/figma-version-common.sh scripts/launcher-common.sh scripts/check-version-drift.sh
       - name: Download verified tooling and build a minimal AppImage without FUSE
         run: bash scripts/tests/appimage-smoke.sh

@@ -281,15 +281,27 @@ Release tracker: [mhdztr/figforge#1](https://github.com/mhdztr/figforge/issues/1
 
 ## 7. Phase 3 — Automation and guardrails
 
-| ID | Work | Outcome |
-| --- | --- | --- |
-| 3.1 | Daily cron workflow polling `RELEASES` + installer nupkg; open/refresh a tracking issue on change | No version drift goes unnoticed |
-| 3.2 | Patch-sentinel test file (`scripts/tests/patch-targets.test.js`) fed by a captured asar fixture | Pattern loss fails CI immediately |
-| 3.3 | Manifest-vs-installer mismatch regression test using recorded fixtures | §1.3 behaviour is locked in |
-| 3.4 | Matrix build job (AppImage + deb + rpm) on release tags | Reproducible artifacts |
-| 3.5 | Test gate: unit + shellcheck + smoke must pass before Release publish | G4 enforced mechanically |
-| 3.6 | Dependabot/toolchain tracking for Node, asar pin, appimagetool runtime | Toolchain drift visible |
-| 3.7 | Issue templates for "new Figma version" and "regression on version X" | Faster triage |
+**Status: IMPLEMENTED (2026-11-23).** All items below are in `master`; only live
+GitHub-side observation of the daily cron remains.
+
+| ID | Work | Outcome | Implementation |
+| --- | --- | --- | --- |
+| 3.1 | Daily cron workflow polling `RELEASES` + installer nupkg; open/refresh a tracking issue on change | No version drift goes unnoticed | ✅ `.github/workflows/version-watch.yml`, `scripts/check-version-drift.sh`, `TRACKED_VERSION` |
+| 3.2 | Patch-sentinel test file (`scripts/tests/patch-targets.test.js`) fed by a captured asar fixture | Pattern loss fails CI immediately | ✅ `scripts/tests/patch-targets.test.js`, `scripts/tests/fixtures/main-js-126.12.7.txt` — extracts the actual regex literals from `build.sh` so changing a pattern breaks the test |
+| 3.3 | Manifest-vs-installer mismatch regression test using recorded fixtures | §1.3 behaviour is locked in | ✅ `scripts/tests/version-drift.test.js`, `scripts/tests/fixtures/RELEASES.stale`, `nupkg-name.txt` |
+| 3.4 | Matrix build job (AppImage + deb + rpm) on release tags | Reproducible artifacts | ✅ `.github/workflows/release-matrix.yml` — one job per format from the same installer, version pin asserted |
+| 3.5 | Test gate: unit + shellcheck + smoke must pass before Release publish | G4 enforced mechanically | ✅ extended `.github/workflows/installer-update-tests.yml` (new tests, `check-version-drift.sh` lint, `TRACKED_VERSION` pin check) + checksum gate in `release-matrix.yml` |
+| 3.6 | Dependabot/toolchain tracking for Node, asar pin, appimagetool runtime | Toolchain drift visible | ✅ `.github/dependabot.yml` for Actions; `@electron/asar` is pinned in `build.sh` and covered by `patch-sentinels.test.js` |
+| 3.7 | Issue templates for "new Figma version" and "regression on version X" | Faster triage | ✅ `.github/ISSUE_TEMPLATE/{new-version,regression,config}.yml` |
+
+### 7.1 How to bump a version after the watcher fires
+
+1. Run `./scripts/check-version-drift.sh` locally to confirm the installer version.
+2. Follow `MAINTENANCE.md` §§2–9 for patch inspection, build and packaging.
+3. Update `TRACKED_VERSION` in the same commit as the changelog.
+4. Push a `v<version>` tag — `release-matrix.yml` rebuilds all three formats and
+   fails if any artifact does not contain the tracked version or a checksum is wrong.
+5. Publish the GitHub Release from the verified artifacts, then close the drift issue.
 
 ---
 
