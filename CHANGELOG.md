@@ -23,7 +23,8 @@ Build-only revision of `126.12.7`; no change to the Figma client, Electron or Ch
 | --- | --- |
 | Desktop-entry suite | 5 tests pass, including the new legacy-migration case |
 | `bash -n` + `shellcheck -x` | Pass |
-| Full suite | Re-run before release; see release notes |
+| Full suite | 84 tests: 82 pass, 0 fail, 2 skipped |
+| NVIDIA PRIME offload | Pass — Figma console reports WebGL 2 via ANGLE on RTX 3050 (driver 620.73.04); a document loaded successfully |
 
 ## [126.12.7-r1] — 2026-11-23
 

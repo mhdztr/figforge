@@ -318,10 +318,9 @@ Only the first scheduled cron execution remains to be observed.
 Priority: P0 blocks release, P1 blocks Wayland parity, P2 quality, P3 polish.
 
 **Progress (2026-11-23):** B5 and B9 are fixed in [v126.12.7-r1](https://github.com/mhdztr/figforge/releases/tag/v126.12.7-r1);
-r2 adds the missing upgrade migration for pre-marker desktop entries. B11
-(NVIDIA PRIME offload) is confirmed at the GL level on this host — a bounded
-Figma launch under `__NV_PRIME_RENDER_OFFLOAD=1` exposed a healthy GPU process,
-but visual canvas output still needs a human check. B4's
+r2 adds the missing upgrade migration for pre-marker desktop entries. B11 is
+verified: under `__NV_PRIME_RENDER_OFFLOAD=1` Figma's own console reports
+WebGL 2 via ANGLE on the RTX 3050 and a document loads successfully. B4's
 modern tray shape was already patched in the base release and re-verified in
 the r1 build. Release artifacts came from [matrix run 45186400778](https://github.com/mhdztr/figforge/actions/runs/45186400778);
 the [test gate 45186385474](https://github.com/mhdztr/figforge/actions/runs/45186385474)
@@ -340,7 +339,7 @@ session or a specific GPU/display combination to confirm.
 | B8 | Pinch zoom unsupported | #11 | P2 | Native binding gap |
 | B9 | `.desktop` overwritten every launch | #32 | P2 | ✅ Fixed in `v126.12.7-r1`, upgrade migration in r2 — marked generated file, custom `Exec` flags preserved |
 | B10 | Eyedropper / font-preview endpoint 404 | README | P2 | Documented limitation |
-| B11 | Direct NVIDIA hardware rendering unverified | release notes | P2 | PRIME offload verified at GL level (RTX 3050, driver 620.73.04); GPU process starts under Figma — visual canvas check still needed |
+| B11 | Direct NVIDIA hardware rendering unverified | release notes | P2 | ✅ Verified in r2 — `__NV_PRIME_RENDER_OFFLOAD=1` gives WebGL 2 via ANGLE on RTX 3050 (driver 620.73.04); a document loaded successfully |
 | B12 | Fresh browser sign-in / logout unverified | release notes | P1 | Auth is load-bearing |
 
 ---
