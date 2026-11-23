@@ -1,6 +1,6 @@
 <h1 align="center">
   <img src="assets/figma-icon.svg" alt="Figma" width="38" valign="middle" />
-  fig-forge
+  figforge
 </h1>
 
 <p align="center">
@@ -9,8 +9,13 @@
   Continuation of the now-archived <a href="https://github.com/IliyaBrook/figma-linux">IliyaBrook/figma-linux</a>.
 </p>
 
+<p align="center">
+  <b>figforge</b> is the project and maintainer name.<br/>
+  The application you build and run is still <b>Figma Desktop</b>, with Figma's own name, icon, and interface intact.
+</p>
+
 > [!IMPORTANT]
-> **Figma removes support for desktop versions six months after release.** If Figma shows a "will no longer work on 15 Dec" banner, your client version is about to be cut off by Figma's servers — upgrade to a current fig-forge build. This is a server-side gate, not a bug in the Linux client. See [ROADMAP.md](ROADMAP.md#1-why-this-project-exists).
+> **Figma removes support for desktop versions six months after release.** If Figma shows a "will no longer work on 15 Dec" banner, your client version is about to be cut off by Figma's servers — upgrade to a current figforge build. This is a server-side gate, not a bug in the Linux client. See [ROADMAP.md](ROADMAP.md#1-why-this-project-exists).
 
 > [!NOTE]
 > This project is a continuation, not a replacement. The original author's license notice, commit history, and credit are preserved — see [ATTRIBUTION.md](ATTRIBUTION.md). The [roadmap](ROADMAP.md) and [maintenance runbook](MAINTENANCE.md) describe how releases are kept current with every Figma version.
@@ -21,7 +26,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/mhdztr/fig-forge/releases/latest"><img src="https://img.shields.io/github/v/release/mhdztr/fig-forge?style=for-the-badge&label=Release&color=blue" alt="Release" /></a>
+  <a href="https://github.com/mhdztr/figforge/releases/latest"><img src="https://img.shields.io/github/v/release/mhdztr/figforge?style=for-the-badge&label=Release&color=blue" alt="Release" /></a>
   &nbsp;
   <img src="https://img.shields.io/badge/Maintainer-mhdztr-blueviolet?style=for-the-badge" alt="Maintainer" />
   &nbsp;
@@ -77,7 +82,7 @@ The build script performs a multi-stage pipeline:
 
 ### Option 1: Download an Existing AppImage
 
-Download the latest maintained AppImage, deb, or rpm from the [Releases](https://github.com/mhdztr/fig-forge/releases) page. Each release tracks a specific Figma Desktop version; see the release notes for the exact version and Electron build.
+Download the latest maintained AppImage, deb, or rpm from the [Releases](https://github.com/mhdztr/figforge/releases) page. Each release tracks a specific Figma Desktop version; see the release notes for the exact version and Electron build.
 
 ```bash
 chmod +x figma-desktop-*.AppImage
@@ -114,8 +119,8 @@ AppImage packaging uses SHA-256-verified appimagetool `1.9.1` and Type-2 runtime
 #### Build & Run
 
 ```bash
-git clone https://github.com/mhdztr/fig-forge.git
-cd fig-forge
+git clone https://github.com/mhdztr/figforge.git
+cd figforge
 
 # Build an AppImage (default)
 ./build.sh
@@ -302,4 +307,4 @@ figma-desktop-linux/
 
 This project provides build tooling only. Figma Desktop is proprietary software owned by Figma, Inc. By using this project you agree to [Figma's Terms of Service](https://www.figma.com/tos/).
 
-The original license notice from [IliyaBrook/figma-linux](https://github.com/IliyaBrook/figma-linux) is preserved unchanged and remains in force. fig-forge is maintained by `mhdztr`. Full attribution and license-continuity details: [ATTRIBUTION.md](ATTRIBUTION.md).
+The original license notice from [IliyaBrook/figma-linux](https://github.com/IliyaBrook/figma-linux) is preserved unchanged and remains in force. figforge is maintained by `mhdztr`. Full attribution and license-continuity details: [ATTRIBUTION.md](ATTRIBUTION.md).

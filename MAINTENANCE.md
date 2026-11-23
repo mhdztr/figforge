@@ -1,4 +1,4 @@
-# fig-forge — Per-Version Maintenance Runbook
+# figforge — Per-Version Maintenance Runbook
 
 > This is the **evergreen procedure**. Execute it top-to-bottom for every new Figma Desktop version. Strategy and phase context live in [`ROADMAP.md`](ROADMAP.md).
 
@@ -9,7 +9,7 @@
 - Work from a clean `master`: `git switch master && git pull --ff-only`.
 - Confirm you are on the newest client (§1). Never build from a remembered version number.
 - Budget ~4 GB disk and a stable connection (~160 MB installer + ~160 MB nupkg + Electron dist).
-- Keep a scratch build location outside the repo (e.g. `/tmp/opencode/fig-forge-build-<version>`).
+- Keep a scratch build location outside the repo (e.g. `/tmp/opencode/figforge-build-<version>`).
 
 ---
 
@@ -181,10 +181,10 @@ Also verify the `.desktop` file is not rewritten on every launch (issue #32).
 ```bash
 git add -A
 git commit -m "chore: release v<version> (Figma <version>, Electron <electron>)"
-git tag -a v<version> -m "fig-forge v<version>"
+git tag -a v<version> -m "figforge v<version>"
 git push origin master --follow-tags
 gh release create v<version> figma-desktop-* SHA256SUMS \
-  --title "fig-forge v<version>" \
+  --title "figforge v<version>" \
   --notes-file RELEASE_NOTES_<version>.md
 ```
 
@@ -242,7 +242,7 @@ server-side support cutoff. This build reports version <version>.
 
 | Thing | Value / command |
 | --- | --- |
-| Repo | `mhdztr/fig-forge` |
+| Repo | `mhdztr/figforge` |
 | Upstream | `IliyaBrook/figma-linux` (archived) |
 | Version tool | `./figma-version-tool.sh --json` |
 | Build | `./build.sh --build appimage --clean yes` |

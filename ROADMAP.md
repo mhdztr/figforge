@@ -1,4 +1,4 @@
-# fig-forge — Continuous Development Roadmap
+# figforge — Continuous Development Roadmap
 
 | Field | Value |
 | --- | --- |
@@ -16,7 +16,7 @@
 
 ### 1.1 Upstream is archived
 
-`IliyaBrook/figma-linux` was archived on **2026-11-07** with an explicit notice: no further releases, no bug fixes, no security updates, no support. Its last release was **126.10.10** (2026-10-16), built against Electron **43.7.11**. Users were invited to fork and self-maintain. `mhdztr/figma-linux` was that fork; it is now **fig-forge** (`mhdztr/fig-forge`), with `upstream` retained as a remote for provenance.
+`IliyaBrook/figma-linux` was archived on **2026-11-07** with an explicit notice: no further releases, no bug fixes, no security updates, no support. Its last release was **126.10.10** (2026-10-16), built against Electron **43.7.11**. Users were invited to fork and self-maintain. `mhdztr/figma-linux` was that fork; it is now **figforge** (`mhdztr/figforge`), with `upstream` retained as a remote for provenance.
 
 ### 1.2 The "will no longer work on 15 Dec" banner — evidence-based diagnosis
 
@@ -50,13 +50,13 @@ The installer is newer and authoritative. `scripts/figma-version-common.sh` + `b
 
 ## 2. Product definition
 
-### 2.1 What fig-forge is
+### 2.1 What figforge is
 
 A maintained fork of the archived figma-linux project. It downloads the official Figma Desktop Windows installer, extracts the real Electron application, patches Linux compatibility seams, bundles a version-matched Electron runtime, and produces **AppImage / .deb / .rpm** packages. It is not a browser wrapper and not a web app.
 
 ### 2.2 Goals
 
-- **G1 — Currency.** Every released fig-forge build tracks the newest full Figma desktop version, with a maximum lag of one Figma release cycle.
+- **G1 — Currency.** Every released figforge build tracks the newest full Figma desktop version, with a maximum lag of one Figma release cycle.
 - **G2 — Continuity.** No user is left stranded by a server-side support cutoff; a supported build exists before every 6-month boundary.
 - **G3 — Fidelity.** The patched app behaves like the official desktop client: auth, preload/native bindings, tray, `figma://` protocol, MCP, local fonts, offline files.
 - **G4 — Verifiability.** Every release is gated by automated tests plus a documented manual smoke matrix.
@@ -132,12 +132,13 @@ Breaking changes use `!` (e.g. `feat!: drop Electron 43 fallback`).
 
 | ID | Task | Verification | Status |
 | --- | --- | --- | --- |
-| 0.1 | Rename GitHub repo `mhdztr/figma-linux` → `mhdztr/fig-forge` | `gh repo view mhdztr/fig-forge` resolves | ✅ |
-| 0.2 | Move working copy to `~/Projects/fig-forge`, repoint `origin`, add `upstream` remote | `git remote -v` | ✅ |
+| 0.1 | Rename GitHub repo `mhdztr/figma-linux` → `mhdztr/figforge` | `gh repo view mhdztr/figforge` resolves | ✅ |
+| 0.2 | Move working copy to `~/Projects/figforge`, repoint `origin`, add `upstream` remote | `git remote -v` | ✅ |
 | 0.3 | Preserve original license notice and add explicit `mhdztr` maintainer credit | README §License + `ATTRIBUTION.md` | ✅ |
 | 0.4 | Diagnose Dec 15 banner from primary sources | §1.2 above | ✅ |
 | 0.5 | Identify newest client and verify Electron/patch targets against it | §1.3 + §5.2 below | ✅ |
 | 0.6 | Write this roadmap + maintenance runbook into the repo | These files | ✅ |
+| 0.7 | Finalize project name as `figforge` while keeping the app itself branded as Figma Desktop | README note + repo metadata | ✅ |
 
 ---
 
@@ -291,7 +292,7 @@ The only thing that changes between versions is the version number and whatever 
 
 | Metric | Target |
 | --- | --- |
-| Max lag from Figma release to fig-forge release | ≤ 72 hours |
+| Max lag from Figma release to figforge release | ≤ 72 hours |
 | Automated test pass rate on release branches | 100% |
 | Silent patch failures | 0 (sentinels enforce) |
 | Users stranded by a version cutoff | 0 |
@@ -303,7 +304,7 @@ The only thing that changes between versions is the version number and whatever 
 
 | Date | Decision | Rationale |
 | --- | --- | --- |
-| 2026-11-23 | Rename to fig-forge, keep `upstream` remote | Respect archival; credit maintainer; preserve provenance |
+| 2026-11-23 | Rename to figforge, keep `upstream` remote | Respect archival; credit maintainer; preserve provenance |
 | 2026-11-23 | Do not patch out the Dec 15 banner | It is server-driven; patching would not restore service |
 | 2026-11-23 | Trust installer version over `RELEASES` on mismatch | Installer was newer and embedded a newer full nupkg |
 | 2026-11-23 | Pin `@electron/asar` 4.2.0 | Higher versions reject Figma's `-1000` header entries |
@@ -317,4 +318,4 @@ The only thing that changes between versions is the version number and whatever 
 - Figma Windows release manifest — https://desktop.figma.com/win/RELEASES
 - Figma Windows installer — https://desktop.figma.com/win/FigmaSetup.exe
 - Upstream archived repo — https://github.com/IliyaBrook/figma-linux
-- This repo — https://github.com/mhdztr/fig-forge
+- This repo — https://github.com/mhdztr/figforge

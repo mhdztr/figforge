@@ -1,11 +1,11 @@
 # Attribution and license continuity
 
-fig-forge is a continuation of **Figma Desktop for Linux** by **IliyaBrook**, originally published at <https://github.com/IliyaBrook/figma-linux>. That repository was archived on 2026-11-07 and is no longer maintained by its original author.
+figforge is a continuation of **Figma Desktop for Linux** by **IliyaBrook**, originally published at <https://github.com/IliyaBrook/figma-linux>. That repository was archived on 2026-11-07 and is no longer maintained by its original author.
 
 ## Maintainer
 
 - **Maintained since 2026-11-23 by `mhdztr`** (<https://github.com/mhdztr>).
-- Repository: <https://github.com/mhdztr/fig-forge>.
+- Repository: <https://github.com/mhdztr/figforge>.
 
 ## License continuity
 
@@ -19,7 +19,7 @@ No third-party license is relicensed, removed, or weakened by this fork. Figma D
 
 Credit for the original build system, Linux compatibility patches, font enumeration work, launcher logic, and packaging scripts belongs to IliyaBrook and the original contributors. Their commit history is preserved intact in this repository; use `git log upstream/master` (remote `upstream` points at the archived repository) to inspect it.
 
-Changes made under the fig-forge name are recorded as conventional commits and can be distinguished with:
+Changes made under the figforge name are recorded as conventional commits and can be distinguished with:
 
 ```bash
 git log --oneline --author=mhdztr
