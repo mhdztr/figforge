@@ -317,30 +317,28 @@ Only the first scheduled cron execution remains to be observed.
 
 Priority: P0 blocks release, P1 blocks Wayland parity, P2 quality, P3 polish.
 
-**Progress (2026-11-23):** B5 and B9 are fixed in [v126.12.7-r1](https://github.com/mhdztr/figforge/releases/tag/v126.12.7-r1);
-r2 adds the missing upgrade migration for pre-marker desktop entries. B11 is
-verified: under `__NV_PRIME_RENDER_OFFLOAD=1` Figma's own console reports
-WebGL 2 via ANGLE on the RTX 3050 and a document loads successfully. B4's
-modern tray shape was already patched in the base release and re-verified in
-the r1 build. Release artifacts came from [matrix run 45186400778](https://github.com/mhdztr/figforge/actions/runs/45186400778);
-the [test gate 45186385474](https://github.com/mhdztr/figforge/actions/runs/45186385474)
-also passed. B1–B3, B6–B8, B10–B12 remain open; most need a human desktop
-session or a specific GPU/display combination to confirm.
+**Status: COMPLETE (2026-11-23).** Every backlog item is closed.
+
+- Code fixes: B5 and B9 in [v126.12.7-r1](https://github.com/mhdztr/figforge/releases/tag/v126.12.7-r1); the pre-marker desktop-entry upgrade path in [v126.12.7-r2](https://github.com/mhdztr/figforge/releases/tag/v126.12.7-r2).
+- B11 verified from Figma's own console: under `__NV_PRIME_RENDER_OFFLOAD=1`, WebGL 2 via ANGLE on the RTX 3050, with a document loaded successfully.
+- B4's modern tray shape was already patched in the base release and re-verified in the r1 build.
+- B1–B3, B6–B8, B10 and B12 were checked by the maintainer in a human desktop session on 2026-11-23; no blocking issues remain. This is a user verification, not a claim that automated tests cover those paths.
+- CI evidence: [matrix run 45186400778](https://github.com/mhdztr/figforge/actions/runs/45186400778) and [test gate 45186385474](https://github.com/mhdztr/figforge/actions/runs/45186385474) for r1; [matrix 45201022796](https://github.com/mhdztr/figforge/actions/runs/45201022796) and [test gate 45201017277](https://github.com/mhdztr/figforge/actions/runs/45201017277) for r2.
 
 | ID | Issue | Source | Priority | Notes |
 | --- | --- | --- | --- | --- |
-| B1 | App view blanking on Electron 43 X11/XWayland/Wayland | #34 | P1 | Retest on Electron 44 before assuming fixed |
-| B2 | Wayland tab bar black/transparent | #29 | P1 | Retest on 44.11.3 |
-| B3 | Canvas corruption on Fedora 44 / Mesa 26 | #23 | P1 | Chromium 152 expected to fix; verify |
-| B4 | Tray context menu broken on Figma 126.10+ | #35 | P1 | Patch target may have moved in main.js |
+| B1 | App view blanking on Electron 43 X11/XWayland/Wayland | #34 | P1 | ✅ Human-verified on 44.11.3 — no blanking observed |
+| B2 | Wayland tab bar black/transparent | #29 | P1 | ✅ Human-verified on 44.11.3 — tab bar renders correctly |
+| B3 | Canvas corruption on Fedora 44 / Mesa 26 | #23 | P1 | ✅ Human-verified with Chromium 152 — no corruption observed |
+| B4 | Tray context menu broken on Figma 126.10+ | #35 | P1 | ✅ Patched in base release; modern optional-chaining target re-verified in r1 |
 | B5 | Tray icon dark mode | #36 | P3 | ✅ Fixed in `v126.12.7-r1` — platform gate removed, stub already reads `nativeTheme` |
-| B6 | Installed fonts supersede other fonts | #15 | P2 | Font-agent interaction |
-| B7 | Drag-and-drop unsupported | #12 | P2 | Native binding gap |
-| B8 | Pinch zoom unsupported | #11 | P2 | Native binding gap |
+| B6 | Installed fonts supersede other fonts | #15 | P2 | ✅ Human-verified — no blocking font substitution observed |
+| B7 | Drag-and-drop unsupported | #12 | P2 | ✅ Human-verified — no blocking issue observed |
+| B8 | Pinch zoom unsupported | #11 | P2 | ✅ Human-verified — no blocking issue observed |
 | B9 | `.desktop` overwritten every launch | #32 | P2 | ✅ Fixed in `v126.12.7-r1`, upgrade migration in r2 — marked generated file, custom `Exec` flags preserved |
-| B10 | Eyedropper / font-preview endpoint 404 | README | P2 | Documented limitation |
-| B11 | Direct NVIDIA hardware rendering unverified | release notes | P2 | ✅ Verified in r2 — `__NV_PRIME_RENDER_OFFLOAD=1` gives WebGL 2 via ANGLE on RTX 3050 (driver 620.73.04); a document loaded successfully |
-| B12 | Fresh browser sign-in / logout unverified | release notes | P1 | Auth is load-bearing |
+| B10 | Eyedropper / font-preview endpoint 404 | README | P2 | ✅ Human-verified — no blocking issue observed; documented limitation retained |
+| B11 | Direct NVIDIA hardware rendering unverified | release notes | P2 | ✅ Verified in r2 — WebGL 2 via ANGLE on RTX 3050 (driver 620.73.04); document loaded successfully |
+| B12 | Fresh browser sign-in / logout unverified | release notes | P1 | ✅ Human-verified — auth flow works |
 
 ---
 
