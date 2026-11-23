@@ -192,14 +192,14 @@ Breaking changes use `!` (e.g. `feat!: drop Electron 43 fallback`).
 
 ### 5.5 Acceptance criteria (definition of done)
 
-- [x] A build from 126.12.7 produces all three package formats — **AppImage only**; deb/rpm blocked by missing host tools (§5.7).
+- [x] A build from 126.12.7 produces all three package formats — AppImage, deb and rpm; deb/rpm verified in Debian/Fedora containers (§5.7, §6.1).
 - [x] Version resolution selects 126.12.7 despite the stale manifest.
 - [x] Electron 44.11.3 is auto-detected and used.
 - [x] All patch sentinels pass; no silent no-op patches.
 - [x] Automated suite: 0 failures.
 - [ ] Manual smoke: auth, canvas, tray, fonts, protocol, MCP all functional on X11 — **partial**: launch, native frames, non-blank render and process health verified; interactive sign-in/MCP/font checks need a human session.
 - [x] Wayland status documented (§5.7): native Wayland launches cleanly; visual #29/#34 checks not captured.
-- [ ] Results appended to this roadmap and a `Release v126.12.7` issue opened — results appended; issue still to open in Phase 2.
+- [x] Results appended to this roadmap and a `Release v126.12.7` issue opened — results in §5.7; tracker at [mhdztr/figforge#1](https://github.com/mhdztr/figforge/issues/1).
 
 ### 5.6 Risks / mitigations
 
@@ -258,6 +258,22 @@ Environment: `EndeavourOS` (Arch-based), Node v26.8.1, X11 `:0` + Hyprland Wayla
 7. Monitor issue tracker for 72 hours; be ready with `fix/*` + `v126.12.7-r1`.
 
 **Rollback:** keep the previous release assets published; if a regression is confirmed, mark the new release as having known issues rather than deleting it, and publish `v<previous>-r1` with the fix.
+
+### 6.1 Phase 2 progress (2026-11-23)
+
+Release tracker: [mhdztr/figforge#1](https://github.com/mhdztr/figforge/issues/1). Issues were disabled on the archived fork and have been re-enabled for the maintained project.
+
+| Step | Status | Evidence |
+| --- | --- | --- |
+| 1. Freeze `release/126.12.7` | ✅ | Branch created from Phase-1-passing commit `15e96c0` and pushed; docs commit `2f6a18c` on top. |
+| 2. `CHANGELOG.md` | ✅ | Versions, defect fixes, test matrix, SHA-256 and known issues recorded. |
+| 3. Build all artifacts from a clean checkout | ✅ | AppImage from Phase 1 clean build reused (only documentation changed since). deb built in `debian:bookworm-slim`, rpm in `fedora:41`, both from the release branch with the same local installer. Install/purge verified in fresh containers. |
+| 4. Tag + GitHub Release with notes/checksums | ✅ | Tag `v126.12.7`; release notes from `CHANGELOG.md`; `SHA256SUMS` attached and verified. |
+| 5. README links / version badge | ✅ | `Figma Desktop 126.12.7` badge, direct release link, changelog link. |
+| 6. December-cutoff announcement | ✅ | README `IMPORTANT` banner: pre-June builds must upgrade before 15 Dec; notice is a real server-side version gate, not a UI string to hide. |
+| 7. 72-hour monitor | ⏳ | Starts after publish; tracker #1 is the collection point. Announcement discussion [#2](https://github.com/mhdztr/figforge/discussions/2) is live. |
+
+**Packaging strategy note:** the host is EndeavourOS with no passwordless sudo and no `dpkg-deb`/`rpmbuild`. Docker is available, so native packages are built inside Debian/Fedora containers using the same `build.sh` and the same local `FigmaSetup.exe` as the AppImage. This gives real dpkg/rpm toolchain verification without modifying the host.
 
 ---
 

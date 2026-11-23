@@ -34,14 +34,18 @@ First tracked release of the maintained fork. The `RELEASES` manifest still adve
 | Check | Result |
 | --- | --- |
 | Clean AppImage build (`--clean yes`) | Pass — `figma-desktop-126.12.7-amd64.AppImage`, 115 MB |
-| SHA-256 | `c4c9e4e37f514186fe26d4887b1790089344c79bd5d93cc8394e756bfbd22d91` |
+| AppImage SHA-256 | `c4c9e4e37f514186fe26d4887b1790089344c79bd5d93cc8394e756bfbd22d91` |
+| deb SHA-256 | `f2fb4afbcea69d040e66bf28b9e6799d75542f0f0412ae789b557b3f8a2e4dfe` |
+| rpm SHA-256 | `4fcc87a6a52316ac0c5f018427023d650bfe1312e82e51324dff72eab6a3b27e` |
 | Automated suite | 69 tests: 67 pass, 0 fail, 2 skipped (deb/rpm packaging tools absent on this host) |
 | `bash -n` on all shell scripts | Pass |
 | `shellcheck -x` on build/version/launcher scripts | Pass |
 | AppImage runtime smoke | Pass |
 | X11 launch | Pass (partial) — native-framed `Untitled - Figma` window, non-blank render, 4 renderers, empty stderr |
 | Native Wayland launch | Pass (partial) — `--ozone-platform=wayland`, 4 renderers, empty stderr |
-| `.deb` / `.rpm` build | Pending — verified in Debian/Fedora containers during Phase 2 |
+| `.deb` build + install/purge | Pass — built in `debian:bookworm-slim`, installed and purged in a fresh container |
+| `.rpm` build + install/remove | Pass — built in `fedora:41`, installed and removed in a fresh container |
+| `SHA256SUMS` | Verified — all three artifacts `OK` |
 
 ### Known issues
 
