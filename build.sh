@@ -720,9 +720,41 @@ require('./frame-fix-wrapper.js');
 require('./${original_main}');
 EOFENTRY
 
+	# ---- Fail-loud patch sentinels ----
+	# A sed that matches nothing still exits 0, so a minifier change used to
+	# produce a "successful" build with broken native frames/menus. Verify the
+	# expected literals exist before touching the file. Baseline from 126.12.7.
+	local main_js='app.asar.contents/main.js'
+	if [[ -f $main_js ]]; then
+		local frame_not frame_true frame_false title_hidden app_menu
+		frame_not=$(grep -oF 'frame:!1' "$main_js" | wc -l)
+		frame_true=$(grep -oF 'frame:!0' "$main_js" | wc -l)
+		frame_false=$(grep -oE 'frame[[:space:]]*:[[:space:]]*false' "$main_js" | wc -l)
+		title_hidden=$(grep -oF 'titleBarStyle:"hidden"' "$main_js" | wc -l)
+		app_menu=$(grep -oF 'process.platform==="win32"&&(this.windowsAppMenu=' "$main_js" | wc -l)
+		echo "Patch sentinels: frame:!1=$frame_not frame:!0=$frame_true frame:false=$frame_false titleBarStyle:hidden=$title_hidden windowsAppMenu=$app_menu"
+
+		# Figma's minifier may spell "false" any of three ways; accept any, but
+		# require at least one or the frame patch would be a silent no-op.
+		if (( frame_not + frame_true + frame_false == 0 )); then
+			echo 'ERROR: no frameless BrowserWindow sentinel in main.js (expected frame:!1, frame:!0, or frame:false)' >&2
+			return 1
+		fi
+		if (( title_hidden == 0 )); then
+			echo 'ERROR: titleBarStyle:"hidden" sentinel missing from main.js' >&2
+			return 1
+		fi
+		if (( app_menu == 0 )); then
+			echo 'ERROR: windowsAppMenu win32 gate sentinel missing from main.js' >&2
+			return 1
+		fi
+	else
+		echo "ERROR: $main_js missing - cannot verify patch sentinels" >&2
+		return 1
+	fi
+
 	# ---- Patch BrowserWindow creation in main.js ----
 	echo 'Patching BrowserWindow creation for native frames...'
-	local main_js='app.asar.contents/main.js'
 	if [[ -f $main_js ]]; then
 		# frame:!1 -> frame:true (minified false)
 		sed -i 's/frame:!1/frame:true/g' "$main_js"
@@ -732,6 +764,11 @@ EOFENTRY
 		sed -i 's/frame[[:space:]]*:[[:space:]]*false/frame:true/g' "$main_js"
 		# Remove titleBarStyle:"hidden"
 		sed -i 's/titleBarStyle:"hidden"/titleBarStyle:"default"/g' "$main_js"
+		# Verify the patch actually landed (defence in depth after the sentinels)
+		if grep -qE 'frame[[:space:]]*:[[:space:]]*(false|!0|!1)' "$main_js" || grep -qF 'titleBarStyle:"hidden"' "$main_js"; then
+			echo "ERROR: native-frame patch left stale patterns in $main_js" >&2
+			return 1
+		fi
 		echo "Patched $main_js for native frames"
 
 		# ---- Patch openFile to allow duplicate tabs (with tray toggle + persistent state) ----
@@ -896,6 +933,10 @@ console.log('Duplicate tabs patch applied (' + patched + '/5 patches)');
 	# but keep the app menu dropdown button visible on Linux
 	local shell_html='app.asar.contents/shell.html'
 	if [[ -f $shell_html ]]; then
+		if ! grep -qF '</head>' "$shell_html"; then
+			echo "ERROR: </head> injection point missing from $shell_html" >&2
+			return 1
+		fi
 		sed -i 's|</head>|<style>\
 #__MINIMIZE_CAPTION_BUTTON__,\
 #__MAXIMIZE_CAPTION_BUTTON__,\
@@ -988,20 +1029,26 @@ const fs = require('fs');
 let code = fs.readFileSync('$main_js', 'utf8');
 // Regex matches the function regardless of minified variable names:
 //   async handleCommandLineArgs(ARG){let V=MOD.app.isPackaged?1:2;if(ARG.length>V){let A=ARG[V];if(FN(A,{isExternalOpen:!0}))return!0;if(STAT.default.statSync(A,{throwIfNoEntry:!1}))return await OPEN(A)}return!1}
+// Figma 126.12.x already handles Linux argv natively: it slices argv and skips
+// flag arguments when process.platform === 'linux'. Detect that first so we do
+// not overwrite upstream's working implementation with the legacy patch.
+const nativePattern = /async handleCommandLineArgs\(\w+\)\{let \w+=\w+\.slice\(1\),\w+=\[\],\w+=process\.platform===\"linux\"/;
 const pattern = /async handleCommandLineArgs\((\w+)\)\{let (\w+)=(\w+)\.app\.isPackaged\?1:2;if\(\1\.length>\2\)\{let (\w+)=\1\[\2\];if\((\w+)\(\4,\{isExternalOpen:!0\}\)\)return!0;if\((\w+)\.default\.statSync\(\4,\{throwIfNoEntry:!1\}\)\)return await (\w+)\(\4\)\}return!1\}/;
 const m = code.match(pattern);
-if (m) {
+if (nativePattern.test(code)) {
+  console.log('handleCommandLineArgs already handles Linux argv upstream - skipping patch');
+} else if (m) {
   const [fullMatch, arg, , , innerVar, urlFn, statMod, openFn] = m;
   const replacement = 'async handleCommandLineArgs(' + arg + '){for(let _i=1;_i<' + arg + '.length;_i++){let ' + innerVar + '=' + arg + '[_i];if(' + innerVar + '.startsWith(\"-\")||' + innerVar + '.endsWith(\".asar\")||' + innerVar + '.endsWith(\".js\"))continue;if(' + urlFn + '(' + innerVar + ',{isExternalOpen:!0}))return!0;if(' + statMod + '.default.statSync(' + innerVar + ',{throwIfNoEntry:!1}))return await ' + openFn + '(' + innerVar + ')}return!1}';
   code = code.replace(fullMatch, replacement);
   fs.writeFileSync('$main_js', code);
   console.log('handleCommandLineArgs patched for Linux argv (regex match)');
 } else {
-  console.error('Warning: handleCommandLineArgs pattern not found - Figma may have updated');
+  console.error('ERROR: handleCommandLineArgs pattern not found - Figma may have updated');
   console.error('Auth redirect from browser may not work');
   process.exit(1);
 }
-"
+" || exit 1
 	fi
 
 	# ---- Patch platform detection ----
@@ -1027,21 +1074,32 @@ if (m) {
 const fs = require('fs');
 let code = fs.readFileSync('$main_js', 'utf8');
 
-// Regex matches tray init regardless of minified variable names:
-//   this.electronTray.setToolTip(MOD.name),this.electronTray.on(\"right-click\",()=>{var V;(V=this.electronTray)==null||V.popUpContextMenu(MENUFN())})
-const pattern = /this\.electronTray\.setToolTip\((\w+)\.name\),this\.electronTray\.on\(\"right-click\",\(\)=>\{var (\w+);\(\2=this\.electronTray\)==null\|\|\2\.popUpContextMenu\((\w+)\(\)\)\}\)/;
-const m = code.match(pattern);
-if (m) {
-  const [fullMatch, modName, varName, menuFn] = m;
+// Tray init shape changed in 126.12.x from an explicit null-check to optional
+// chaining: this.electronTray?.popUpContextMenu(MENUFN()). Support both so
+// older Figma versions keep building.
+const legacyPattern = /this\.electronTray\.setToolTip\((\w+)\.name\),this\.electronTray\.on\(\"right-click\",\(\)=>\{var (\w+);\(\2=this\.electronTray\)==null\|\|\2\.popUpContextMenu\((\w+)\(\)\)\}\)/;
+const modernPattern = /this\.electronTray\.setToolTip\((\w+)\.name\),this\.electronTray\.on\(\"right-click\",\(\)=>\{this\.electronTray\?\.popUpContextMenu\((\w+)\(\)\)\}\)/;
+const legacy = code.match(legacyPattern);
+const modern = code.match(modernPattern);
+
+if (legacy) {
+  const [, modName, varName, menuFn] = legacy;
   const replacement = 'this.electronTray.setToolTip(' + modName + '.name),this.electronTray.setContextMenu(' + menuFn + '()),this.electronTray.on(\"right-click\",()=>{var ' + varName + ';(' + varName + '=this.electronTray)==null||' + varName + '.popUpContextMenu(' + menuFn + '())})';
-  code = code.replace(fullMatch, replacement);
+  code = code.replace(legacy[0], replacement);
   fs.writeFileSync('$main_js', code);
-  console.log('Tray context menu patched: added setContextMenu() for Linux (regex match)');
+  console.log('Tray context menu patched: added setContextMenu() for Linux (legacy pattern)');
+} else if (modern) {
+  const [, modName, menuFn] = modern;
+  const replacement = 'this.electronTray.setToolTip(' + modName + '.name),this.electronTray.setContextMenu(' + menuFn + '()),this.electronTray.on(\"right-click\",()=>{this.electronTray?.popUpContextMenu(' + menuFn + '())})';
+  code = code.replace(modern[0], replacement);
+  fs.writeFileSync('$main_js', code);
+  console.log('Tray context menu patched: added setContextMenu() for Linux (modern pattern)');
 } else {
-  console.error('Warning: Tray context menu pattern not found - Figma may have updated');
-  console.error('Right-click on tray icon may not show context menu on Linux');
+  console.error('ERROR: Tray context menu pattern not found - Figma may have updated');
+  console.error('Right-click on tray icon will not show context menu on Linux');
+  process.exit(1);
 }
-"
+" || exit 1
 	fi
 
 	# ---- Patch tray window: CSS fixes + DevTools debug support ----
@@ -1054,9 +1112,11 @@ if (m) {
 const fs = require('fs');
 let code = fs.readFileSync('$main_js', 'utf8');
 
-// Regex to match: VAR.setAlwaysOnTop(!0,"pop-up-menu"),VAR.webContents.on("will-navigate"
-// The variable name may change across Figma versions
-const trayVarPattern = /(\w+)\.setAlwaysOnTop\(!0,"pop-up-menu"\),\1\.webContents\.on\("will-navigate"/;
+// Regex to match: VAR.setAlwaysOnTop(!0,'pop-up-menu'),VAR.webContents.on('will-navigate'
+// The variable name may change across Figma versions.
+// NOTE: double quotes are backslash-escaped because this JS is embedded in a
+// bash double-quoted node -e string; bare quotes would be stripped.
+const trayVarPattern = /(\w+)\.setAlwaysOnTop\(!0,\"pop-up-menu\"\),\1\.webContents\.on\(\"will-navigate\"/;
 const trayVarMatch = code.match(trayVarPattern);
 const trayVar = trayVarMatch ? trayVarMatch[1] : 't';
 const oldPattern = trayVar + '.setAlwaysOnTop(!0,\"pop-up-menu\"),' + trayVar + '.webContents.on(\"will-navigate\"';
@@ -1107,7 +1167,7 @@ const jsCode = \`
       el.classList.remove('js-fullscreen-wheel-event-capture');
     });
     // Ensure scrollContainer actually scrolls
-    document.querySelectorAll('[class*="scrollContainer--E33Ej"], [class*="desktop_dropdown_container--scrollContainer"]').forEach(el => {
+    document.querySelectorAll('[class*=\"scrollContainer--E33Ej\"], [class*=\"desktop_dropdown_container--scrollContainer\"]').forEach(el => {
       el.style.overflowY = 'auto';
       el.style.flex = '1 1 0%';
       el.style.minHeight = '0';
@@ -1136,9 +1196,10 @@ if (code.includes(oldPattern)) {
 } else if (code.includes(trayVar + '.setAlwaysOnTop(!0,\"pop-up-menu\")') && code.includes('insertCSS')) {
   console.log('Tray notification CSS patch already applied - skipping');
 } else {
-  console.error('Warning: Tray window pattern not found');
+  console.error('ERROR: Tray window pattern not found - Figma may have updated');
+  process.exit(1);
 }
-"
+" || exit 1
 	fi
 
 	cd "$project_root" || exit 1
@@ -1449,7 +1510,7 @@ main() {
 
 	# Phase 4: Patch and prepare
 	extract_app_asar
-	patch_app_asar
+	patch_app_asar || exit 1
 	finalize_app_asar
 	stage_electron
 	process_icons
