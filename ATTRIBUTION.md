@@ -22,5 +22,8 @@ Credit for the original build system, Linux compatibility patches, font enumerat
 Changes made under the figforge name are recorded as conventional commits and can be distinguished with:
 
 ```bash
-git log --oneline --author=mhdztr
+git log --oneline --author=zakkithoriq
 ```
+
+This matches the maintainer's commit email, so it finds both the earlier commits
+that carry the author name `Pinefeast` and later ones authored as `mhdztr`.
