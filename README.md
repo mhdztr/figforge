@@ -1,18 +1,19 @@
 <h1 align="center">
   <img src="assets/figma-icon.svg" alt="Figma" width="38" valign="middle" />
-  Figma Desktop for Linux
+  fig-forge
 </h1>
 
+<p align="center">
+  <b>Actively maintained fork of Figma Desktop for Linux</b><br/>
+  Built and maintained by <a href="https://github.com/mhdztr">mhdztr</a>.<br/>
+  Continuation of the now-archived <a href="https://github.com/IliyaBrook/figma-linux">IliyaBrook/figma-linux</a>.
+</p>
+
 > [!IMPORTANT]
-> **Archived — no longer maintained as of November 7, 2026.**
->
-> Unfortunately, I no longer have the time to maintain this project. I now work on macOS and Windows, and I no longer have a personal interest in continuing its development.
->
-> There will be no further releases, bug fixes, security updates, or support from me. Existing issues and pull requests will remain available for reference, but I will no longer review or merge contributions here.
->
-> The source, documentation, and existing releases are preserved for reference. The instructions below describe the project before archival; compatibility with future Figma versions is not guaranteed. If you would like to continue development, you are welcome to fork the repository and maintain your own version.
->
-> Thank you to everyone who used the project, reported issues, and contributed fixes.
+> **Figma removes support for desktop versions six months after release.** If Figma shows a "will no longer work on 15 Dec" banner, your client version is about to be cut off by Figma's servers — upgrade to a current fig-forge build. This is a server-side gate, not a bug in the Linux client. See [ROADMAP.md](ROADMAP.md#1-why-this-project-exists).
+
+> [!NOTE]
+> This project is a continuation, not a replacement. The original author's license notice, commit history, and credit are preserved — see [ATTRIBUTION.md](ATTRIBUTION.md). The [roadmap](ROADMAP.md) and [maintenance runbook](MAINTENANCE.md) describe how releases are kept current with every Figma version.
 
 <p align="center">
   Run the <b>real</b> Figma Desktop app on Linux — not a browser wrapper, not a web app,<br/>
@@ -20,7 +21,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/IliyaBrook/figma-linux/releases/latest"><img src="https://img.shields.io/github/v/release/IliyaBrook/figma-linux?style=for-the-badge&label=Release&color=blue" alt="Release" /></a>
+  <a href="https://github.com/mhdztr/fig-forge/releases/latest"><img src="https://img.shields.io/github/v/release/mhdztr/fig-forge?style=for-the-badge&label=Release&color=blue" alt="Release" /></a>
+  &nbsp;
+  <img src="https://img.shields.io/badge/Maintainer-mhdztr-blueviolet?style=for-the-badge" alt="Maintainer" />
   &nbsp;
   <img src="https://img.shields.io/badge/Platform-Linux%20x86__64-orange?style=for-the-badge&logo=linux&logoColor=white" alt="Platform" />
   &nbsp;
@@ -30,6 +33,12 @@
 </p>
 
 This project extracts the official Figma Desktop Windows installer, patches it for Linux compatibility, and packages it as an **AppImage**, **.deb**, or **.rpm**. You get the real desktop client experience: system tray icon, `figma://` protocol handling, MCP server support, native window frames, local font support, and offline file opening.
+
+## Documentation
+
+- [ROADMAP.md](ROADMAP.md) — strategy, phases, risk register, and the continuous-release model.
+- [MAINTENANCE.md](MAINTENANCE.md) — the per-version runbook: version watch, patch sentinels, build, test, release.
+- [ATTRIBUTION.md](ATTRIBUTION.md) — upstream credit and license continuity.
 
 ## Why This Exists
 
@@ -68,7 +77,7 @@ The build script performs a multi-stage pipeline:
 
 ### Option 1: Download an Existing AppImage
 
-Existing AppImage, deb, and rpm packages remain available on the [Releases](https://github.com/IliyaBrook/figma-linux/releases) page. These are archived builds and will not receive updates.
+Download the latest maintained AppImage, deb, or rpm from the [Releases](https://github.com/mhdztr/fig-forge/releases) page. Each release tracks a specific Figma Desktop version; see the release notes for the exact version and Electron build.
 
 ```bash
 chmod +x figma-desktop-*.AppImage
@@ -105,8 +114,8 @@ AppImage packaging uses SHA-256-verified appimagetool `1.9.1` and Type-2 runtime
 #### Build & Run
 
 ```bash
-git clone https://github.com/IliyaBrook/figma-linux.git
-cd figma-linux
+git clone https://github.com/mhdztr/fig-forge.git
+cd fig-forge
 
 # Build an AppImage (default)
 ./build.sh
@@ -292,3 +301,5 @@ figma-desktop-linux/
 ## License
 
 This project provides build tooling only. Figma Desktop is proprietary software owned by Figma, Inc. By using this project you agree to [Figma's Terms of Service](https://www.figma.com/tos/).
+
+The original license notice from [IliyaBrook/figma-linux](https://github.com/IliyaBrook/figma-linux) is preserved unchanged and remains in force. fig-forge is maintained by `mhdztr`. Full attribution and license-continuity details: [ATTRIBUTION.md](ATTRIBUTION.md).
